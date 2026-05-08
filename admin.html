@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Admin | Lenskart Pali</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .modal { transition: opacity 0.25s ease; visibility: hidden; opacity: 0; }
+        .modal.active { visibility: visible; opacity: 1; }
+        body.modal-active { overflow: hidden; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+
+    <!-- Navigation -->
+    <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-lg text-white shadow-lg shadow-blue-500/20">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+            </div>
+            <h1 class="font-black tracking-tighter uppercase text-sm md:text-base">Master Dashboard</h1>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="openAddModal()" class="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> <span class="hidden md:block">New Order</span>
+            </button>
+            <button onclick="refreshData()" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl text-[10px] font-bold uppercase border border-slate-700 flex items-center gap-2">
+                <i class="fa-solid fa-arrows-rotate"></i> <span class="hidden md:block">Refresh</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
+        
+        <!-- Stats Grid -->
+        <div id="statsRow" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                <p class="text-slate-400 text-[10px] font-black uppercase mb-1 tracking-widest">Total Orders</p>
+                <h3 id="statTotal" class="text-3xl font-black text-slate-800">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                <p class="text-amber-500 text-[10px] font-black uppercase mb-1 tracking-widest">Pending</p>
+                <h3 id="statPending" class="text-3xl font-black text-amber-500">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
+                <p class="text-blue-500 text-[10px] font-black uppercase mb-1 tracking-widest">Shipped</p>
+                <h3 id="statShipped" class="text-3xl font-black text-blue-500">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-green-500">
+                <p class="text-green-600 text-[10px] font-black uppercase mb-1 tracking-widest">Delivered</p>
+                <h3 id="statDelivered" class="text-3xl font-black text-green-600">0</h3>
+            </div>
+        </div>
+
+        <!-- Controls Area -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
+            <div class="relative w-full">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="adminSearch" onkeyup="filterTable()" placeholder="Search Order ID, Name, or Mobile..." 
+                       class="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <button onclick="downloadCSV()" class="w-full md:w-auto bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase whitespace-nowrap hover:bg-black transition">
+                <i class="fa-solid fa-file-csv mr-2"></i>Export CSV
+            </button>
+        </div>
+
+        <!-- Master Table -->
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[800px]">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Order Info</th>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer Details</th>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</th>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterTableBody" class="divide-y divide-slate-50">
+                        <!-- Data auto-injected -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="loadingState" class="p-20 text-center flex flex-col items-center gap-4">
+                <div class="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Syncing with Google Sheets...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- VIEW MODAL: Details + Parcel Picture -->
+    <div id="viewModal" class="modal fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="closeModals()"></div>
+        <div class="relative bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 class="text-xl font-black text-slate-800" id="v_id">ORD-000</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Full Order Dossier</p>
+                </div>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-900"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
+            </div>
+            <div class="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 rounded-2xl">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Customer</p>
+                        <p id="v_name" class="font-black text-sm"></p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-2xl">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Contact</p>
+                        <p id="v_mob" class="font-mono text-sm font-bold text-blue-600"></p>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Shipping Address</p>
+                    <p id="v_addr" class="text-xs font-bold leading-relaxed"></p>
+                </div>
+                <div id="v_track_card" class="hidden p-4 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-200">
+                    <p class="text-[9px] font-bold opacity-70 uppercase mb-2">Tracking Data</p>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p id="v_courier" class="font-black uppercase"></p>
+                            <p id="v_track_id" class="font-mono text-xs opacity-90"></p>
+                        </div>
+                        <i class="fa-solid fa-truck-fast text-2xl opacity-30"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-3 ml-1">Rider Parcel Verification</p>
+                    <div id="v_img_container" class="rounded-3xl overflow-hidden border-4 border-slate-100 bg-slate-100">
+                        <img id="v_img" src="" class="w-full h-auto object-cover hidden" alt="Parcel Photo">
+                        <div id="v_no_img" class="p-10 text-center text-xs text-slate-400 italic">No image uploaded for this order.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATE MODAL: Edit Order -->
+    <div id="editModal" class="modal fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/80" onclick="closeModals()"></div>
+        <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-6">
+            <h3 class="text-lg font-black mb-4 uppercase">Update Record</h3>
+            <form id="editForm" class="space-y-4">
+                <input type="hidden" id="edit_id">
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-slate-400">Status</label>
+                    <select id="edit_status" class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 font-bold outline-none">
+                        <option value="Pending">Pending</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-slate-400">Customer Name</label>
+                    <input type="text" id="edit_name" class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-slate-400">Mobile</label>
+                    <input type="text" id="edit_mob" class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200">
+                </div>
+                <button type="button" onclick="saveEdits()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+        let masterOrders = [];
+        let masterTracker = [];
+
+        async function refreshData() {
+            document.getElementById('loadingState').classList.remove('hidden');
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
+                const result = await res.json();
+                masterOrders = result.orders.slice(1).reverse();
+                masterTracker = result.tracker.slice(1);
+                renderTable();
+                updateStats();
+            } catch (e) { alert("Sync Error. Check Web App URL."); }
+            document.getElementById('loadingState').classList.add('hidden');
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('masterTableBody');
+            tbody.innerHTML = "";
+
+            masterOrders.forEach(order => {
+                const statusStyle = getStatusStyle(order[11]);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="p-5">
+                            <div class="text-xs font-black text-blue-600 font-mono tracking-tighter">${order[0]}</div>
+                            <div class="text-[9px] text-slate-400 uppercase font-bold">${new Date(order[10]).toLocaleDateString()}</div>
+                        </td>
+                        <td class="p-5">
+                            <div class="font-black text-sm">${order[1]}</div>
+                            <div class="text-xs text-slate-500 font-mono">${order[3]}</div>
+                        </td>
+                        <td class="p-5">
+                            <div class="text-xs font-bold text-slate-600">${order[6]}</div>
+                            <div class="text-[10px] text-slate-400">${order[7]}</div>
+                        </td>
+                        <td class="p-5">
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${statusStyle}">${order[11]}</span>
+                        </td>
+                        <td class="p-5">
+                            <div class="flex gap-4">
+                                <button onclick="viewOrder('${order[0]}')" class="text-blue-500 hover:scale-125 transition"><i class="fa-solid fa-eye"></i></button>
+                                <button onclick="openEditModal('${order[0]}')" class="text-slate-400 hover:text-slate-900"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteOrder('${order[0]}')" class="text-red-300 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function viewOrder(id) {
+            const order = masterOrders.find(o => o[0] === id);
+            const track = masterTracker.find(t => t[0] === id);
+
+            document.getElementById('v_id').innerText = id;
+            document.getElementById('v_name').innerText = order[1];
+            document.getElementById('v_mob').innerText = order[3];
+            document.getElementById('v_addr').innerText = `${order[2]}, ${order[6]}, ${order[7]} - ${order[5]}`;
+            
+            const trackCard = document.getElementById('v_track_card');
+            if(track) {
+                trackCard.classList.remove('hidden');
+                document.getElementById('v_courier').innerText = track[1];
+                document.getElementById('v_track_id').innerText = track[2];
+                if(track[6] && track[6].includes('http')) {
+                    document.getElementById('v_img').src = track[6];
+                    document.getElementById('v_img').classList.remove('hidden');
+                    document.getElementById('v_no_img').classList.add('hidden');
+                }
+            } else {
+                trackCard.classList.add('hidden');
+                document.getElementById('v_img').classList.add('hidden');
+                document.getElementById('v_no_img').classList.remove('hidden');
+            }
+            toggleModal('viewModal');
+        }
+
+        function openEditModal(id) {
+            const order = masterOrders.find(o => o[0] === id);
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_name').value = order[1];
+            document.getElementById('edit_mob').value = order[3];
+            document.getElementById('edit_status').value = order[11];
+            toggleModal('editModal');
+        }
+
+        async function saveEdits() {
+            const id = document.getElementById('edit_id').value;
+            const payload = {
+                action: "fullUpdate",
+                orderId: id,
+                name: document.getElementById('edit_name').value,
+                mobile: document.getElementById('edit_mob').value,
+                status: document.getElementById('edit_status').value,
+                address: masterOrders.find(o => o[0] === id)[2] // Keep original address
+            };
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            closeModals();
+            refreshData();
+        }
+
+        async function deleteOrder(id) {
+            if(confirm(`PERMANENTLY DELETE Order ${id}? This cannot be undone.`)) {
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "deleteOrder", orderId: id }) });
+                refreshData();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('statTotal').innerText = masterOrders.length;
+            document.getElementById('statPending').innerText = masterOrders.filter(o => o[11] === 'Pending').length;
+            document.getElementById('statShipped').innerText = masterOrders.filter(o => o[11] === 'Shipped').length;
+            document.getElementById('statDelivered').innerText = masterOrders.filter(o => o[11] === 'Delivered').length;
+        }
+
+        function getStatusStyle(s) {
+            if(s === 'Pending') return 'bg-amber-100 text-amber-600 border border-amber-200';
+            if(s === 'Shipped') return 'bg-blue-100 text-blue-600 border border-blue-200';
+            if(s === 'Delivered') return 'bg-green-100 text-green-600 border border-green-200';
+            return 'bg-slate-100 text-slate-500';
+        }
+
+        function toggleModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.classList.add('modal-active');
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+            document.body.classList.remove('modal-active');
+        }
+
+        function filterTable() {
+            const val = document.getElementById('adminSearch').value.toUpperCase();
+            const rows = document.querySelectorAll('#masterTableBody tr');
+            rows.forEach(row => row.style.display = row.innerText.toUpperCase().includes(val) ? "" : "none");
+        }
+
+        function openAddModal() { window.open('index.html', '_blank'); } // Reuses the Store Panel
+
+        window.onload = refreshData;
+    </script>
+</body>
+</html>

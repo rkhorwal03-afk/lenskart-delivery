@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rider App | Lenskart Pali</title>
+    <!-- Tooling: Tailwind for UI, Html5Qrcode for Scanning, Tesseract for OCR -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Smooth transitions for verified card */
+        .fade-enter { opacity: 0; transform: translateY(10px); }
+        .fade-show { opacity: 1; transform: translateY(0); transition: all 0.4s ease; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans pb-10 text-slate-900">
+
+    <header class="bg-green-700 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
+        <h1 class="font-bold uppercase flex items-center gap-2 text-sm"><i class="fa-solid fa-motorcycle"></i> Rider Operation</h1>
+        <div class="text-[9px] bg-green-800 px-2 py-1 rounded border border-green-500 font-bold uppercase tracking-widest">AI Sync v3.0</div>
+    </header>
+
+    <main class="p-4 max-w-md mx-auto space-y-4">
+        
+        <!-- STEP 1: IDENTIFICATION (QR SCANNER) -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-slate-50 p-4 border-b flex justify-between items-center">
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">1. Identify Package</span>
+                <div class="flex gap-4">
+                    <button onclick="toggleInput('qr')" class="text-blue-600 text-[10px] font-black uppercase underline">Scanner</button>
+                    <button onclick="toggleInput('manual')" class="text-blue-600 text-[10px] font-black uppercase underline">Manual</button>
+                </div>
+            </div>
+            
+            <div id="qr-section" class="p-4">
+                <div id="reader" class="rounded-2xl overflow-hidden border-2 border-slate-100 bg-black min-h-[220px]"></div>
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="startLiveQR()" class="bg-blue-600 text-white text-[11px] p-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-100 transition active:scale-95">
+                        <i class="fa-solid fa-video"></i> Live Scan
+                    </button>
+                    <label class="bg-white border-2 border-slate-200 text-slate-700 text-[11px] p-4 rounded-2xl font-black uppercase tracking-widest text-center cursor-pointer flex items-center justify-center gap-2 active:bg-slate-50">
+                        <i class="fa-solid fa-image"></i> Gallery
+                        <input type="file" accept="image/*" class="hidden" onchange="scanQRFromImage(this)">
+                    </label>
+                </div>
+            </div>
+
+            <div id="manual-section" class="p-4 hidden animate-in slide-in-from-top">
+                <input type="text" id="orderId" placeholder="Type Order ID (e.g. ORD...)" 
+                       class="w-full border-2 border-slate-100 p-4 rounded-2xl focus:border-green-500 outline-none font-mono text-sm uppercase tracking-widest bg-slate-50">
+                <button onclick="fetchOrderDetails(document.getElementById('orderId').value)" 
+                        class="w-full mt-3 bg-slate-900 text-white p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition">Search Store Database</button>
+            </div>
+        </div>
+
+        <!-- AUTO-FETCH: VERIFIED ORDER CARD -->
+        <div id="orderDisplay" class="hidden bg-blue-600 text-white p-6 rounded-[2rem] shadow-2xl shadow-blue-200/50 fade-enter">
+            <div class="flex justify-between items-start mb-3">
+                <div class="bg-white/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Matched Package</div>
+                <i class="fa-solid fa-circle-check text-2xl"></i>
+            </div>
+            <p id="detName" class="text-2xl font-black mb-1"></p>
+            <p id="detAddr" class="text-[11px] opacity-80 leading-relaxed line-clamp-2"></p>
+            <div class="mt-5 pt-4 border-t border-blue-400 flex justify-between items-center">
+                <span id="detMob" class="font-mono text-sm font-black tracking-tighter"></span>
+                <span class="text-[9px] font-bold bg-white text-blue-600 px-3 py-1 rounded-full uppercase">Verified</span>
+            </div>
+        </div>
+
+        <!-- STEP 2: ADVANCED OCR TRACKING -->
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <label class="block text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">2. Capture Tracking ID</label>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <label class="flex flex-col items-center justify-center border-2 border-dashed border-blue-100 bg-blue-50/50 p-6 rounded-2xl cursor-pointer hover:bg-blue-50 active:scale-95 transition-all">
+                    <i class="fa-solid fa-camera text-blue-600 text-2xl mb-2"></i>
+                    <span class="text-[10px] font-black text-blue-700 uppercase tracking-widest">Cam Snap</span>
+                    <input type="file" accept="image/*" capture="environment" class="hidden" onchange="processOCR(this)">
+                </label>
+                
+                <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 rounded-2xl cursor-pointer hover:bg-slate-100 active:scale-95 transition-all">
+                    <i class="fa-solid fa-images text-slate-500 text-2xl mb-2"></i>
+                    <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Pick Photo</span>
+                    <input type="file" accept="image/*" class="hidden" onchange="processOCR(this)">
+                </label>
+            </div>
+
+            <div id="ocrLoader" class="hidden mt-4 p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center gap-3 animate-pulse">
+                <div class="animate-spin h-4 w-4 border-2 border-amber-600 border-t-transparent rounded-full"></div>
+                <span class="text-[10px] font-black text-amber-700 uppercase tracking-widest">AI Extracting Labels...</span>
+            </div>
+
+            <div class="mt-5 space-y-2">
+                <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Detected Alphanumeric ID</label>
+                <input type="text" id="trackingId" placeholder="Waiting for label scan..." 
+                       class="w-full border-2 border-slate-100 bg-slate-50 p-4 rounded-2xl font-mono font-black text-xl text-slate-800 text-center uppercase tracking-widest focus:border-green-400 outline-none">
+            </div>
+        </div>
+
+        <!-- STEP 3: COURIER & SYNC -->
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <label class="block text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">3. Logistics Partner</label>
+            <select id="courierPartner" class="w-full border-2 border-slate-100 p-4 rounded-2xl mb-5 bg-white font-black text-sm outline-none appearance-none cursor-pointer focus:border-green-500">
+                <option value="DTDC">DTDC Express</option>
+                <option value="BlueDart">BlueDart Aviation</option>
+                <option value="Delhivery">Delhivery Ltd</option>
+                <option value="Speed Post">India Speed Post</option>
+                <option value="Self Delivery">Store Delivery</option>
+            </select>
+            
+            <button onclick="submitToTracker()" id="submitBtn" class="w-full bg-green-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-green-100 uppercase tracking-widest text-[11px] hover:bg-green-700 active:scale-95 transition-all flex justify-center items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Confirm & Sync Dispatch
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // CONFIGURATION: Replace with your actual deployed URL
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+        let html5QrCode;
+
+        function toggleInput(mode) {
+            document.getElementById('qr-section').classList.toggle('hidden', mode !== 'qr');
+            document.getElementById('manual-section').classList.toggle('hidden', mode !== 'manual');
+        }
+
+        // --- 1. QR LOGIC ---
+        function startLiveQR() {
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (text) => {
+                onIDFound(text);
+                html5QrCode.stop();
+            }).catch(err => alert("Please grant camera permissions."));
+        }
+
+        function scanQRFromImage(input) {
+            if (!input.files[0]) return;
+            const qScanner = new Html5Qrcode("reader");
+            qScanner.scanFile(input.files[0], true)
+                .then(text => onIDFound(text))
+                .catch(err => alert("No valid QR detected in this image."));
+        }
+
+        function onIDFound(id) {
+            document.getElementById('orderId').value = id.toUpperCase();
+            fetchOrderDetails(id);
+            document.getElementById('qr-section').innerHTML = `<div class="p-5 bg-green-50 text-green-700 border border-green-200 rounded-2xl text-center font-black text-xs uppercase tracking-widest">✓ PACKET SCANNED: ${id}</div>`;
+        }
+
+        // --- 2. AUTO-FETCH DATA ---
+        async function fetchOrderDetails(id) {
+            const display = document.getElementById('orderDisplay');
+            display.classList.remove('hidden', 'fade-show');
+            display.innerHTML = '<div class="text-center py-4 font-black text-[10px] uppercase tracking-widest">Querying Cloud Database...</div>';
+
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "getOrder", orderId: id.toUpperCase() })
+                });
+                const result = await res.json();
+
+                if(result.status === "success") {
+                    display.classList.add('fade-show');
+                    display.innerHTML = `
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-[9px] font-black opacity-70 uppercase tracking-widest">Matched Package</span>
+                            <i class="fa-solid fa-circle-check text-2xl"></i>
+                        </div>
+                        <p class="text-2xl font-black mb-1 tracking-tight">${result.data.name}</p>
+                        <p class="text-[11px] opacity-80 leading-relaxed line-clamp-2 italic">${result.data.address}</p>
+                        <div class="mt-5 pt-4 border-t border-blue-400 flex justify-between items-center">
+                            <span class="font-mono text-sm font-black tracking-tighter">${result.data.mobile}</span>
+                            <span class="text-[9px] font-bold bg-white text-blue-600 px-3 py-1 rounded-full uppercase">Verified</span>
+                        </div>`;
+                } else {
+                    display.innerHTML = `<div class="p-4 bg-red-500 text-white rounded-2xl text-center font-black text-xs uppercase tracking-widest">Order ID Not Found</div>`;
+                }
+            } catch (e) { display.innerHTML = "Database Connection Timeout"; }
+        }
+
+        // --- 3. ADVANCED ALPHANUMERIC OCR ---
+        async function processOCR(input) {
+            if (!input.files[0]) return;
+            const loader = document.getElementById('ocrLoader');
+            const trackField = document.getElementById('trackingId');
+            const courierDropdown = document.getElementById('courierPartner');
+            
+            loader.classList.remove('hidden');
+            trackField.value = "...";
+
+            try {
+                const { data: { text } } = await Tesseract.recognize(input.files[0], 'eng');
+                const cleanText = text.toUpperCase();
+                console.log("OCR Snapshot:", cleanText);
+
+                // Auto-Detect Courier based on keywords
+                if (cleanText.includes("DTDC")) courierDropdown.value = "DTDC";
+                else if (cleanText.includes("BLUE") || cleanText.includes("DART")) courierDropdown.value = "BlueDart";
+                else if (cleanText.includes("DELHIVERY")) courierDropdown.value = "Delhivery";
+                else if (cleanText.includes("POST")) courierDropdown.value = "Speed Post";
+
+                // Complex Regex Patterns for Indian Logistics
+                const patterns = [
+                    /[A-Z]\d{8,11}/,            // DTDC (e.g., W17455473)
+                    /[A-Z]{2}\d{9}[A-Z]{2}/,    // Speed Post (e.g., EU123456789IN)
+                    /\d{10,16}/                 // Standard 10-16 Digit Numeric (BlueDart/Delhivery)
+                ];
+
+                let foundID = "";
+                for (let regex of patterns) {
+                    const match = cleanText.match(regex);
+                    if (match) { foundID = match[0]; break; }
+                }
+
+                if (foundID) {
+                    trackField.value = foundID;
+                    trackField.classList.replace('bg-slate-50', 'bg-green-50');
+                    trackField.classList.add('border-green-300');
+                } else {
+                    trackField.value = "";
+                    alert("OCR finished but no clear ID detected. Please input manually.");
+                }
+            } catch (err) { alert("AI Scan failed. Check lighting."); }
+            finally { loader.classList.add('hidden'); }
+        }
+
+        // --- 4. CLOUD SYNC ---
+        async function submitToTracker() {
+            const btn = document.getElementById('submitBtn');
+            const payload = {
+                action: "updateTracker",
+                sheetName: "Delivery Tracker",
+                orderId: document.getElementById('orderId').value.toUpperCase(),
+                trackingId: document.getElementById('trackingId').value.toUpperCase(),
+                courier: document.getElementById('courierPartner').value,
+                riderName: "RIDER_PALI_01",
+                status: "Shipped",
+                pickupDate: new Date().toLocaleDateString()
+            };
+
+            if(!payload.orderId || !payload.trackingId) return alert("Verify Order ID and Tracking ID first!");
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Finalizing Sync...';
+
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await res.json();
+                if(result.status === "success") {
+                    alert("SUCCESS! Cloud Dashboard Updated.");
+                    location.reload();
+                }
+            } catch (e) { alert("Network Error. Data not saved."); btn.disabled = false; }
+        }
+    </script>
+</body>
+</html>
