@@ -24,126 +24,110 @@
                 color: black;
                 background: white;
             }
-            #qrcode img { display: block !important; margin: 5px auto; }
+            #qrcode img { display: block !important; margin: 5px auto; width: 80px; height: 80px; }
             @page { margin: 0; }
         }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
 
-    <!-- Navigation -->
     <nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center gap-2">
                     <div class="bg-blue-600 p-1.5 rounded-lg text-xs"><i class="fa-solid fa-bolt"></i></div>
-                    <span class="font-black uppercase tracking-tighter text-sm hidden md:block">Lenskart Pali</span>
+                    <span class="font-black uppercase tracking-tighter text-sm">Lenskart Pali</span>
                 </div>
                 <div class="flex h-full">
-                    <a href="index.html" class="flex items-center px-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-blue-500 bg-slate-800 opacity-100">
-                        <i class="fa-solid fa-store mr-2"></i> Store
-                    </a>
-                    <a href="rider.html" class="flex items-center px-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent opacity-60 hover:opacity-100">
-                        <i class="fa-solid fa-motorcycle mr-2"></i> Rider
-                    </a>
-                    <a href="admin.html" class="flex items-center px-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent opacity-60 hover:opacity-100">
-                        <i class="fa-solid fa-chart-line mr-2"></i> Master
-                    </a>
+                    <button onclick="toggleView('form')" class="px-4 text-[10px] font-bold uppercase border-b-2 border-blue-500 bg-slate-800">Store</button>
+                    <a href="rider.html" class="flex items-center px-4 text-[10px] font-bold uppercase opacity-60">Rider</a>
+                    <a href="admin.html" class="flex items-center px-4 text-[10px] font-bold uppercase opacity-60">Master</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-xl mx-auto p-4 md:p-8 space-y-6">
+    <main class="max-w-xl mx-auto p-4 space-y-6">
         <div class="flex bg-white p-1 rounded-2xl shadow-sm border border-slate-200">
-            <button onclick="toggleView('form')" id="tab-form" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl bg-blue-600 text-white transition-all">New Entry</button>
-            <button onclick="toggleView('search')" id="tab-search" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl text-slate-400 transition-all">Reprint Label</button>
+            <button onclick="toggleView('form')" id="tab-form" class="flex-1 py-3 text-[10px] font-black uppercase rounded-xl bg-blue-600 text-white">New Entry</button>
+            <button onclick="toggleView('search')" id="tab-search" class="flex-1 py-3 text-[10px] font-black uppercase rounded-xl text-slate-400">Reprint Label</button>
         </div>
 
         <div id="orderFormSection" class="space-y-6">
-            <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
-                <form id="orderForm" class="p-6 md:p-8 space-y-5">
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer Name</label>
-                        <input type="text" id="custName" required class="w-full border-2 border-slate-100 p-4 rounded-2xl mt-1 focus:border-blue-600 outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Street Address</label>
-                        <textarea id="address" required rows="2" class="w-full border-2 border-slate-100 p-4 rounded-2xl mt-1 outline-none"></textarea>
-                    </div>
+            <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 p-6">
+                <form id="orderForm" class="space-y-5">
+                    <input type="text" id="custName" required placeholder="Customer Name" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-600">
+                    <textarea id="address" required placeholder="Street Address" rows="2" class="w-full border-2 p-4 rounded-2xl outline-none"></textarea>
                     <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mobile</label>
-                            <input type="tel" id="mobile" required class="w-full border-2 border-slate-100 p-4 rounded-2xl mt-1 outline-none">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Alt Number</label>
-                            <input type="tel" id="altMobile" class="w-full border-2 border-slate-100 p-4 rounded-2xl mt-1 outline-none">
-                        </div>
+                        <input type="tel" id="mobile" required placeholder="Mobile" class="border-2 p-4 rounded-2xl outline-none">
+                        <input type="tel" id="altMobile" placeholder="Alt Mobile" class="border-2 p-4 rounded-2xl outline-none">
                     </div>
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Landmark</label>
-                        <input type="text" id="landmark" class="w-full border-2 border-slate-100 p-4 rounded-2xl mt-1 outline-none">
-                    </div>
-                    <div class="p-5 bg-blue-50/50 rounded-3xl border border-blue-100 space-y-4">
-                        <input type="number" id="pincode" required placeholder="Pincode" onkeyup="handlePincode(this.value)" class="w-full border-2 border-blue-100 p-4 rounded-2xl font-black text-blue-700 outline-none">
-                        <select id="postOffice" class="w-full border-2 border-slate-100 p-4 rounded-2xl bg-white outline-none"></select>
+                    <input type="text" id="landmark" placeholder="Landmark" class="w-full border-2 p-4 rounded-2xl outline-none">
+                    
+                    <div class="p-5 bg-blue-50 rounded-3xl space-y-4">
+                        <input type="number" id="pincode" required placeholder="Pincode" onkeyup="handlePincode(this.value)" class="w-full border-2 p-4 rounded-2xl font-black text-blue-700 outline-none">
+                        <select id="postOffice" class="w-full border-2 p-4 rounded-2xl bg-white outline-none"></select>
                         <div class="flex gap-2">
-                            <input type="text" id="district" readonly placeholder="City/District" class="w-1/2 bg-white/50 p-4 rounded-2xl text-slate-500 font-bold text-xs">
-                            <input type="text" id="state" readonly placeholder="State" class="w-1/2 bg-white/50 p-4 rounded-2xl text-slate-500 font-bold text-xs">
+                            <input type="text" id="district" readonly placeholder="City" class="w-1/2 bg-white p-4 rounded-2xl text-slate-500 font-bold text-xs">
+                            <input type="text" id="state" readonly placeholder="State" class="w-1/2 bg-white p-4 rounded-2xl text-slate-500 font-bold text-xs">
                         </div>
                     </div>
-                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg uppercase tracking-widest text-xs">Save & Print Slip</button>
+                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg uppercase text-xs">Save & Print Slip</button>
                 </form>
             </div>
         </div>
 
         <div id="searchSection" class="hidden space-y-6">
             <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-200">
-                <input type="text" id="searchInput" placeholder="Order ID (ORD...)" class="w-full bg-slate-100 p-5 rounded-2xl outline-none font-bold text-center text-blue-600 mb-4">
-                <button onclick="searchOrder()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest">Find Record</button>
-                <div id="searchResult" class="hidden mt-8 p-6 bg-blue-600 text-white rounded-[2rem] shadow-2xl">
-                    <p id="resName" class="text-xl font-black mb-1"></p>
-                    <button id="reprintBtn" class="w-full bg-white text-blue-600 font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest">Print Label Now</button>
+                <input type="text" id="searchInput" placeholder="Order ID (ORD...)" class="w-full bg-slate-100 p-5 rounded-2xl outline-none font-bold text-center text-blue-600 mb-4 uppercase">
+                <button onclick="searchOrder()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase">Find Record</button>
+                
+                <!-- Result Card with Print Button -->
+                <div id="searchResult" class="hidden mt-8 p-6 bg-blue-600 text-white rounded-[2rem] border-4 border-blue-400">
+                    <div class="mb-4">
+                        <p class="text-[10px] uppercase font-bold opacity-80">Customer Found:</p>
+                        <p id="resName" class="text-xl font-black uppercase tracking-tight"></p>
+                    </div>
+                    <!-- This is the Print Button you requested -->
+                    <button id="reprintBtn" class="w-full bg-white text-blue-600 font-black py-5 rounded-2xl uppercase text-[11px] shadow-xl flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-print"></i> Print Label Now
+                    </button>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- SLIP LAYOUT -->
+    <!-- PRINT SLIP -->
     <div id="printArea">
         <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
             <h2 style="margin: 0; font-size: 16px; font-weight: 900;">LENSKART PALI</h2>
-            <p style="margin: 2px 0; font-size: 10px; font-weight: bold; letter-spacing: 1.5px;">DELIVERY SLIP</p>
+            <p style="margin: 2px 0; font-size: 10px; font-weight: bold; letter-spacing: 1px;">DELIVERY SLIP</p>
         </div>
         
         <div style="font-size: 11px; line-height: 1.4; margin-bottom: 10px;">
             <p style="margin: 0; font-weight: bold; border-bottom: 1px solid #000; display: inline-block;">To,</p>
-            <p style="margin: 5px 0 0 0;">Customer Name:- <span id="prName" style="font-weight: 900;"></span></p>
-            <p style="margin: 0;">Address:- <span id="prAddr"></span></p>
-            <p style="margin: 0;">Post Office:- <span id="prPO"></span></p>
-            <p style="margin: 0;">City:- <span id="prCity"></span></p>
-            <p style="margin: 0;">State:- <span id="prState"></span></p>
-            <p style="margin: 0;">Pincode:- <span id="prPin"></span></p>
-            <p style="margin: 0;">Landmark:- <span id="prLandmark"></span></p>
-            <p style="margin: 0;">Contact:- <span id="prMob" style="font-weight: bold;"></span></p>
-            <p style="margin: 0;">Alt Contact:- <span id="prAltMob"></span></p>
+            <p style="margin: 5px 0 0 0;">Customer Name - <span id="prName" style="font-weight: 900;"></span></p>
+            <p style="margin: 0;">Address - <span id="prAddr"></span></p>
+            <p style="margin: 0;">Post Office - <span id="prPO"></span></p>
+            <p style="margin: 0;">City - <span id="prCity"></span></p>
+            <p style="margin: 0;">State - <span id="prState"></span></p>
+            <p style="margin: 0;">Pincode - <span id="prPin"></span></p>
+            <p style="margin: 0;">Landmark - <span id="prLandmark"></span></p>
+            <p style="margin: 0;">Contact - <span id="prMob" style="font-weight: bold;"></span></p>
+            <p style="margin: 0;">Alt Contact - <span id="prAltMob"></span></p>
         </div>
 
         <div style="font-size: 10px; line-height: 1.2; border-top: 1px dashed #000; padding-top: 8px; margin-bottom: 10px;">
             <p style="margin: 0; font-weight: bold; border-bottom: 1px solid #000; display: inline-block;">From,</p>
             <p style="margin: 5px 0 0 0; font-weight: bold;">LENSKART PALI (Shop 3-4)</p>
             <p style="margin: 0;">Ahinsa Complex, Suraj Pole, Pali, RJ 306401</p>
-            <p style="margin: 0;">Contact:- +91 8290776551</p>
+            <p style="margin: 0;">Contact - +91 8290776551</p>
         </div>
 
         <div style="margin: 5px 0; text-align: center; border-top: 1px solid #000; padding-top: 5px;">
             <p style="margin: 0; font-size: 9px; font-weight: bold;">BARCODE</p>
             <div id="qrcode" style="display: flex; justify-content: center;"></div>
             <p style="margin: 3px 0 0 0; font-size: 10px; font-weight: 900;">Order id:- <span id="prId"></span></p>
-        </div>
-        <div style="font-size: 8px; text-align: center; margin-top: 5px;">
-            <p>*** THANK YOU ***</p>
         </div>
     </div>
 
@@ -153,7 +137,7 @@
 
         function validateSession() {
             if (sessionStorage.getItem('pali_auth') !== 'true') {
-                const pass = prompt("LENSKART PALI: Enter System Password");
+                const pass = prompt("Enter Password");
                 if (pass === SYSTEM_PASSWORD) sessionStorage.setItem('pali_auth', 'true');
                 else { document.body.innerHTML = ""; window.stop(); }
             }
@@ -163,8 +147,8 @@
         function toggleView(mode) {
             document.getElementById('orderFormSection').classList.toggle('hidden', mode !== 'form');
             document.getElementById('searchSection').classList.toggle('hidden', mode !== 'search');
-            document.getElementById('tab-form').className = mode === 'form' ? 'flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl bg-blue-600 text-white' : 'flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl text-slate-400';
-            document.getElementById('tab-search').className = mode === 'search' ? 'flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl bg-blue-600 text-white' : 'flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl text-slate-400';
+            document.getElementById('tab-form').className = mode === 'form' ? 'flex-1 py-3 text-[10px] font-black uppercase rounded-xl bg-blue-600 text-white' : 'flex-1 py-3 text-[10px] font-black uppercase rounded-xl text-slate-400';
+            document.getElementById('tab-search').className = mode === 'search' ? 'flex-1 py-3 text-[10px] font-black uppercase rounded-xl bg-blue-600 text-white' : 'flex-1 py-3 text-[10px] font-black uppercase rounded-xl text-slate-400';
         }
 
         async function handlePincode(pin) {
@@ -182,12 +166,14 @@
 
         async function searchOrder() {
             const id = document.getElementById('searchInput').value.toUpperCase();
+            if(!id) return;
             try {
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrder", orderId: id }) });
                 const result = await res.json();
                 if(result.status === "success") {
                     document.getElementById('resName').innerText = result.data.name;
                     document.getElementById('searchResult').classList.remove('hidden');
+                    // Maps database fields to printer logic
                     document.getElementById('reprintBtn').onclick = () => { triggerPrint(id, result.data); };
                 } else alert("Order Not Found");
             } catch (e) { alert("Cloud Error"); }
@@ -218,16 +204,17 @@
             document.getElementById('prId').innerText = orderId;
             document.getElementById('prName').innerText = data.name;
             document.getElementById('prAddr').innerText = data.address;
-            document.getElementById('prPO').innerText = data.postOffice || "";
-            document.getElementById('prCity').innerText = data.district || "";
-            document.getElementById('prState').innerText = data.state || "";
-            document.getElementById('prPin').innerText = data.pincode;
-            document.getElementById('prLandmark').innerText = data.landmark;
-            document.getElementById('prMob').innerText = data.mobile;
-            document.getElementById('prAltMob').innerText = data.altMobile;
+            // Correctly catches database data for City, State, and Post Office
+            document.getElementById('prPO').innerText = data.postOffice || data.PostOffice || "";
+            document.getElementById('prCity').innerText = data.district || data.District || "";
+            document.getElementById('prState').innerText = data.state || data.State || "";
+            document.getElementById('prPin').innerText = data.pincode || data.Pincode || "";
+            document.getElementById('prLandmark').innerText = data.landmark || "N/A";
+            document.getElementById('prMob').innerText = data.mobile || data["Mobile Number"] || "";
+            document.getElementById('prAltMob').innerText = data.altMobile || data["Alternative Number"] || "N/A";
             
             document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: orderId, width: 100, height: 100, correctLevel : QRCode.CorrectLevel.H });
+            new QRCode(document.getElementById("qrcode"), { text: orderId, width: 80, height: 80, correctLevel : QRCode.CorrectLevel.H });
             setTimeout(() => { window.print(); }, 1200);
         }
     </script>
