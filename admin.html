@@ -10,6 +10,8 @@
     
     <style>
         #printArea { display: none; }
+        
+        /* Rugtek Thermal Print Optimization */
         @media print {
             body > *:not(#printArea) { display: none !important; }
             #printArea {
@@ -18,13 +20,16 @@
                 position: absolute;
                 left: 0; top: 0;
                 width: 58mm; padding: 1mm;
-                font-family: 'Calibri', sans-serif !important;
+                font-family: 'Calibri', 'Trebuchet MS', sans-serif !important;
                 font-size: 16px !important;
                 font-weight: 700 !important;
                 color: #000 !important;
+                background: #ffffff !important;
                 line-height: 1.1 !important;
             }
-            #qrcode img { display: block !important; margin: 8px auto; width: 100px; height: 100px; }
+            /* Explicitly hides the canvas to prevent blank boxes on Android Print PDF */
+            #qrcode canvas { display: none !important; }
+            #qrcode img { display: block !important; margin: 8px auto; width: 90px; height: 90px; }
             @page { margin: 0; }
         }
         .modal-blur { backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.6); }
@@ -88,11 +93,13 @@
                 <div class="space-y-4">
                     <div class="p-4 bg-slate-50 rounded-2xl">
                         <p id="v_name" class="font-black text-lg uppercase"></p>
-                        <p id="v_mob" class="text-sm font-bold text-blue-600"></p>
+                        <p id="v_mob" class="text-sm font-bold text-green-600"></p>
+                        <p id="v_altmob" class="text-[10px] font-bold text-slate-500 uppercase mt-1"></p>
                     </div>
                     <div class="p-4 bg-slate-50 rounded-2xl">
                         <p class="text-[9px] font-black text-slate-400 uppercase">Shipping Address</p>
                         <p id="v_addr" class="text-xs font-bold leading-relaxed"></p>
+                        <p id="v_location" class="text-[10px] font-bold text-blue-600 mt-1"></p>
                         <p id="v_lm" class="mt-2 text-[9px] font-black text-blue-700 bg-blue-100 px-2 py-1 rounded inline-block"></p>
                     </div>
                 </div>
@@ -121,15 +128,23 @@
     </div>
 
     <div id="printArea">
-        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
+        <div style="text-align: center; border-bottom: 2.5px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
             <h1 style="margin: 0; font-size: 20px;">DELIVERY SLIP</h1>
         </div>
         <div style="margin-bottom: 10px;">
             <p style="margin: 0; text-decoration: underline;">To,</p>
             <p style="margin: 5px 0 0 0;">Customer Name - <span id="prName"></span></p>
             <p style="margin: 0;">Address - <span id="prAddr"></span></p>
-            <p style="margin: 0;">City/PO - <span id="prPO"></span></p>
-            <p style="margin: 5px 0 0 0; border-top: 1px solid #000; padding-top: 5px;">Contact number - <span id="prMob"></span></p>
+            <p style="margin: 0;">PO - <span id="prPO"></span></p>
+            <p style="margin: 0;">City - <span id="prCity"></span></p>
+            <p style="margin: 0;">State - <span id="prState"></span></p>
+            <p style="margin: 0;">Pincode - <span id="prPin"></span></p>
+            <p style="margin: 0;">Landmark - <span id="prLandmark"></span></p>
+            
+            <div style="border-top: 2px solid #000; margin-top: 6px; padding-top: 4px;">
+                <p style="margin: 0; font-weight: 900;">Contact - <span id="prMob"></span></p>
+                <p style="margin: 0;">Alt Contact - <span id="prAltMob"></span></p>
+            </div>
         </div>
         <div style="text-align: center; border-top: 2px solid #000; margin-top: 10px; padding-top: 10px;">
             <div id="qrcode"></div>
@@ -138,7 +153,8 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+        // ⚠️ PASTE YOUR LATEST GOOGLE APPS SCRIPT URL HERE ⚠️
+        const SCRIPT_URL = "YOUR_SCRIPT_URL_HERE"; 
         let lightOrders = [];
 
         async function refreshData() {
@@ -182,7 +198,6 @@
                         <td class="p-5 text-center">
                             <div class="flex justify-center gap-4">
                                 <button onclick="viewOrder('${order[0]}')" class="text-blue-500 hover:scale-110 transition"><i class="fa-solid fa-eye text-lg"></i></button>
-                                <button onclick="deleteOrder('${order[0]}')" class="text-slate-300 hover:text-red-600 transition"><i class="fa-solid fa-trash-can text-lg"></i></button>
                             </div>
                         </td>
                     </tr>
@@ -212,19 +227,34 @@
             try {
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
                 const result = await res.json();
-                const d = result.data;
+                const d = result.data.order;
+                const t = result.data.track;
                 
-                document.getElementById('v_id').innerText = d.order[0];
-                document.getElementById('v_name').innerText = d.order[1];
-                document.getElementById('v_mob').innerText = d.order[3];
-                document.getElementById('v_addr').innerText = `${d.order[2]}, ${d.order[6]}, Pali`;
-                document.getElementById('v_lm').innerText = "Landmark: " + d.order[9];
+                document.getElementById('v_id').innerText = d[0];
+                document.getElementById('v_name').innerText = d[1];
+                document.getElementById('v_mob').innerText = d[3];
+                document.getElementById('v_altmob').innerText = "Alt: " + (d[4] || "N/A");
                 
-                document.getElementById('v_img_label').src = d.track ? d.track[6] : "";
-                document.getElementById('v_img_parcel').src = d.track ? d.track[7] : "";
+                document.getElementById('v_addr').innerText = d[2];
+                // Using Dynamic City (d[7]) and State (d[8])
+                document.getElementById('v_location').innerText = `${d[6]}, ${d[7]}, ${d[8]} - ${d[5]}`;
+                document.getElementById('v_lm').innerText = "Landmark: " + d[9];
+                
+                document.getElementById('v_img_label').src = t ? t[6] : "";
+                document.getElementById('v_img_parcel').src = t ? t[7] : "";
 
                 document.getElementById('modalPrintBtn').onclick = () => {
-                    triggerPrint(id, { name: d.order[1], address: d.order[2], po: d.order[6], pin: d.order[5], lm: d.order[9], mob: d.order[3] });
+                    triggerPrint(id, { 
+                        name: d[1], 
+                        address: d[2], 
+                        po: d[6], 
+                        city: d[7], 
+                        state: d[8], 
+                        pin: d[5], 
+                        lm: d[9], 
+                        mob: d[3], 
+                        altMob: d[4] 
+                    });
                 };
 
                 document.getElementById('viewModal').classList.replace('hidden', 'flex');
@@ -255,10 +285,16 @@
             document.getElementById('prId').innerText = id;
             document.getElementById('prName').innerText = data.name;
             document.getElementById('prAddr').innerText = data.address;
-            document.getElementById('prPO').innerText = data.po;
+            document.getElementById('prPO').innerText = data.po || "";
+            document.getElementById('prCity').innerText = data.city || "";
+            document.getElementById('prState').innerText = data.state || "";
+            document.getElementById('prPin').innerText = data.pin;
+            document.getElementById('prLandmark').innerText = data.lm;
             document.getElementById('prMob').innerText = data.mob;
+            document.getElementById('prAltMob').innerText = data.altMob || "N/A";
+            
             document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: id, width: 100, height: 100 });
+            new QRCode(document.getElementById("qrcode"), { text: id, width: 100, height: 100, correctLevel : QRCode.CorrectLevel.H });
             setTimeout(() => window.print(), 1000);
         }
 
