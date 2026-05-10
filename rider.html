@@ -88,8 +88,7 @@
                 </div>
                 <i class="fa-solid fa-clock-rotate-left text-2xl text-blue-200"></i>
             </div>
-            <div id="historyList" class="space-y-3">
-                </div>
+            <div id="historyList" class="space-y-3"></div>
         </div>
     </main>
 
@@ -112,13 +111,11 @@
     </div>
 
     <script>
-        // ⚠️ PASTE YOUR LATEST GOOGLE APPS SCRIPT URL HERE ⚠️
-        const SCRIPT_URL = "YOUR_SCRIPT_URL_HERE"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec"; 
         
         let labelData = "";
         let parcelData = "";
 
-        // --- UI NAVIGATION ---
         function toggleRiderView(v) {
             document.getElementById('scanSection').classList.toggle('hidden', v !== 'scan');
             document.getElementById('historySection').classList.toggle('hidden', v !== 'history');
@@ -127,7 +124,6 @@
             if(v === 'history') loadLocalHistory();
         }
 
-        // --- HARDWARE CAMERA & FAST COMPRESSION ---
         function capture(type) {
             const input = document.createElement('input');
             input.type = 'file';
@@ -149,7 +145,7 @@
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; // Optimal width for clear tracking IDs while keeping size small
+                    const MAX_WIDTH = 800; 
                     const scale = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH;
                     canvas.height = img.height * scale;
@@ -157,7 +153,6 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    // Compress to 60% quality JPEG (~50KB to 100KB)
                     const base64 = canvas.toDataURL('image/jpeg', 0.6);
                     
                     if(type === 'label') { 
@@ -173,7 +168,6 @@
             };
         }
 
-        // --- CLOUD SYNC LOGIC ---
         async function syncToCloud() {
             const orderId = document.getElementById('orderIdSearch').value.toUpperCase().trim();
             const courier = document.getElementById('courier').value;
@@ -194,7 +188,7 @@
                 orderId: orderId,
                 courier: courier,
                 trackingId: trackingId,
-                riderName: "PALI_RIDER", // Fixed identifier
+                riderName: "PALI_RIDER", 
                 pickupDate: new Date().toLocaleDateString(),
                 trackingImg: labelData,
                 parcelImg: parcelData
@@ -218,10 +212,8 @@
             }
         }
 
-        // --- LOCAL HISTORY MANAGER (Instant Load) ---
         function saveToLocalHistory(data) {
             let history = JSON.parse(localStorage.getItem('pali_rider_history') || '[]');
-            // Remove if editing an existing entry to avoid duplicates in history
             history = history.filter(item => item.id !== data.orderId);
             
             history.unshift({ 
@@ -231,7 +223,6 @@
                 time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
             });
             
-            // Keep only the last 20 scans to prevent memory bloat
             localStorage.setItem('pali_rider_history', JSON.stringify(history.slice(0, 20)));
         }
 
@@ -264,7 +255,6 @@
             document.getElementById('courier').value = courier;
             document.getElementById('trackingId').value = tracking;
             
-            // Reset images for safety so old photos aren't accidentally re-uploaded to a new scan
             labelData = ""; parcelData = "";
             document.getElementById('prev-label').classList.add('hidden');
             document.getElementById('prev-parcel').classList.add('hidden');
@@ -273,7 +263,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- UTILS ---
         function showLoading() { document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
         function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
         function resetRiderForm() { location.reload(); }
