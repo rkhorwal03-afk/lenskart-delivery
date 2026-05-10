@@ -7,225 +7,514 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+
     <style>
+        body { font-family: 'Space Grotesk', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .input-field {
+            width: 100%; border: 2px solid #e2e8f0; padding: 13px 16px;
+            border-radius: 14px; outline: none;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px; background: #f8fafc;
+            transition: border-color .2s, background .2s;
+        }
+        .input-field:focus { border-color: #2563eb; background: #fff; }
+        .label {
+            display: block; font-size: 10px; font-weight: 700;
+            letter-spacing: .08em; text-transform: uppercase;
+            color: #94a3b8; margin-bottom: 6px;
+        }
+
+        /* ── TOAST ── */
+        #toast {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #0f172a; color: #fff;
+            padding: 12px 24px; border-radius: 100px;
+            font-size: 12px; font-weight: 700; letter-spacing: .05em;
+            transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+            z-index: 9999; white-space: nowrap; pointer-events: none;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* ════════════════════════════════
+           PRINT STYLES — 76mm thermal
+        ════════════════════════════════ */
         #printArea { display: none; }
 
         @media print {
-            body > *:not(#printArea) { display: none !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body > *:not(#printArea) { display: none !important; visibility: hidden !important; }
             #printArea {
                 display: block !important;
                 visibility: visible !important;
-                position: absolute;
-                left: 0; top: 0;
-                width: 58mm; 
-                padding: 1mm;
-                font-family: 'Arial', sans-serif;
-                color: black;
-                background: white;
+                position: fixed;
+                inset: 0;
+                width: 76mm;
+                padding: 3mm 4mm 4mm;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 10.5px;
+                line-height: 1.5;
+                color: #000;
+                background: #fff;
             }
-            /* High-Contrast QR for thermal printing */
-            #qrcode img { display: block !important; margin: 8px auto; width: 110px; height: 110px; }
-            @page { margin: 0; }
+            /* Only ONE qr canvas shows */
+            #slip-qr canvas,
+            #slip-qr img {
+                display: block !important;
+                width: 72px !important;
+                height: 72px !important;
+            }
+            @page { margin: 0; size: 76mm auto; }
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
+<body class="bg-slate-50 text-slate-900 min-h-screen">
 
-    <nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-2">
-                    <div class="bg-blue-600 p-1.5 rounded-lg text-xs"><i class="fa-solid fa-bolt"></i></div>
-                    <span class="font-black uppercase tracking-tighter text-sm">Lenskart Pali</span>
+<!-- ════════════════════════════
+     SHARED NAV
+════════════════════════════ -->
+<nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-xl">
+    <div class="max-w-5xl mx-auto px-4 flex justify-between items-center h-14">
+        <div class="flex items-center gap-2.5">
+            <div class="bg-blue-600 w-7 h-7 rounded-lg flex items-center justify-center text-xs shadow-lg">
+                <i class="fa-solid fa-eye"></i>
+            </div>
+            <span class="font-bold text-sm hidden sm:block">Lenskart <span class="text-blue-400">Pali</span></span>
+        </div>
+        <div class="flex h-full">
+            <a href="index.html" class="flex items-center gap-2 px-5 text-[11px] font-bold uppercase tracking-widest border-b-2 border-blue-500 text-white bg-slate-800">
+                <i class="fa-solid fa-store text-blue-400"></i> Store
+            </a>
+            <a href="admin.html" class="flex items-center gap-2 px-5 text-[11px] font-bold uppercase tracking-widest border-b-2 border-transparent text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+                <i class="fa-solid fa-chart-line"></i> Master
+            </a>
+        </div>
+        <div class="text-[10px] text-slate-500 mono hidden md:block" id="navDate"></div>
+    </div>
+</nav>
+
+<main class="max-w-xl mx-auto px-4 py-6 space-y-5">
+
+    <!-- Mode toggle -->
+    <div class="flex bg-white p-1 rounded-2xl shadow-sm border border-slate-100">
+        <button onclick="toggleView('form')" id="tab-form"
+            class="flex-1 py-3 text-[11px] font-bold uppercase tracking-widest rounded-xl bg-blue-600 text-white shadow-sm transition-all">
+            <i class="fa-solid fa-plus mr-1.5"></i>New Entry
+        </button>
+        <button onclick="toggleView('search')" id="tab-search"
+            class="flex-1 py-3 text-[11px] font-bold uppercase tracking-widest rounded-xl text-slate-400 hover:text-slate-600 transition-all">
+            <i class="fa-solid fa-print mr-1.5"></i>Reprint Label
+        </button>
+    </div>
+
+    <!-- ══════════════════════
+         NEW ENTRY FORM
+    ══════════════════════ -->
+    <div id="orderFormSection" class="space-y-4">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+
+            <div class="px-6 pt-5 pb-4 border-b border-slate-50 flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-slate-800">New Delivery Entry</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Fill details → Save → Print slip</p>
                 </div>
-                <div class="flex h-full">
-                    <button onclick="toggleView('form')" class="px-4 text-[10px] font-bold uppercase border-b-2 border-blue-500 bg-slate-800">Store</button>
-                    <a href="rider.html" class="flex items-center px-4 text-[10px] font-bold uppercase opacity-60">Rider</a>
-                    <a href="admin.html" class="flex items-center px-4 text-[10px] font-bold uppercase opacity-60">Master</a>
+                <div class="text-[9px] bg-slate-100 text-slate-500 font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+                    STORE_PALI_01
                 </div>
             </div>
-        </div>
-    </nav>
 
-    <main class="max-w-xl mx-auto p-4 space-y-6">
-        <div class="flex bg-white p-1 rounded-2xl shadow-sm border border-slate-200">
-            <button onclick="toggleView('form')" id="tab-form" class="flex-1 py-3 text-[10px] font-black uppercase rounded-xl bg-blue-600 text-white">New Entry</button>
-            <button onclick="toggleView('search')" id="tab-search" class="flex-1 py-3 text-[10px] font-black uppercase rounded-xl text-slate-400">Reprint Label</button>
-        </div>
+            <form id="orderForm" class="p-6 space-y-4" autocomplete="off">
 
-        <div id="orderFormSection" class="space-y-6">
-            <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 p-6">
-                <form id="orderForm" class="space-y-5">
+                <!-- ── ORDER ID (MANUAL) ── -->
+                <div class="p-4 bg-amber-50 border-2 border-amber-200 rounded-2xl">
+                    <label class="label" style="color:#d97706;">
+                        <i class="fa-solid fa-barcode mr-1"></i>
+                        Order ID <span class="text-red-400">*</span>
+                    </label>
+                    <input type="text" id="orderId" required
+                        class="input-field mono !text-amber-800 !font-bold !text-base !bg-white uppercase"
+                        placeholder="e.g. ORD123456789"
+                        oninput="this.value = this.value.toUpperCase()">
+                    <p class="text-[10px] text-amber-600 mt-1.5 font-medium">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                        Enter the Lenskart order ID manually
+                    </p>
+                </div>
+
+                <!-- ── CUSTOMER NAME ── -->
+                <div>
+                    <label class="label">Customer Name <span class="text-red-400">*</span></label>
+                    <input type="text" id="custName" required class="input-field" placeholder="Full name">
+                </div>
+
+                <!-- ── ADDRESS ── -->
+                <div>
+                    <label class="label">Street / House Address <span class="text-red-400">*</span></label>
+                    <textarea id="address" required rows="2"
+                        class="input-field resize-none"
+                        placeholder="House no., Street, Colony…"></textarea>
+                </div>
+
+                <!-- ── MOBILE ── -->
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-[10px] font-black text-blue-600 uppercase">Manual Order ID (Required)</label>
-                        <input type="text" id="manualId" required placeholder="Type Order ID here..." class="w-full border-2 border-blue-100 p-4 rounded-2xl mt-1 outline-none font-bold uppercase focus:border-blue-600">
+                        <label class="label">Mobile <span class="text-red-400">*</span></label>
+                        <input type="tel" id="mobile" required maxlength="10"
+                            class="input-field mono" placeholder="10-digit number">
                     </div>
                     <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Customer Name</label>
-                        <input type="text" id="custName" required class="w-full border-2 p-4 rounded-2xl mt-1 outline-none">
+                        <label class="label">Alt Number</label>
+                        <input type="tel" id="altMobile" maxlength="10"
+                            class="input-field mono" placeholder="Optional">
                     </div>
+                </div>
+
+                <!-- ── PINCODE BLOCK ── -->
+                <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-3">
                     <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Street Address</label>
-                        <textarea id="address" required rows="2" class="w-full border-2 p-4 rounded-2xl mt-1 outline-none"></textarea>
+                        <label class="label" style="color:#3b82f6;">
+                            Pincode <span class="text-red-400">*</span>
+                        </label>
+                        <input type="number" id="pincode" required maxlength="6"
+                            oninput="if(this.value.length===6) fetchPincode(this.value)"
+                            class="input-field mono !font-bold !text-blue-700"
+                            placeholder="6-digit PIN">
+                        <p id="pincodeStatus" class="hidden text-[10px] text-blue-500 mt-1 font-medium animate-pulse">
+                            <i class="fa-solid fa-spinner animate-spin mr-1"></i>Fetching post offices…
+                        </p>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="tel" id="mobile" required placeholder="Mobile" class="border-2 p-4 rounded-2xl outline-none">
-                        <input type="tel" id="altMobile" placeholder="Alt Mobile" class="border-2 p-4 rounded-2xl outline-none">
+
+                    <!-- Post Office dropdown -->
+                    <div>
+                        <label class="label">Post Office</label>
+                        <select id="postOffice" class="input-field !bg-white">
+                            <option value="">— enter pincode to auto-fill —</option>
+                        </select>
                     </div>
-                    <input type="text" id="landmark" placeholder="Landmark" class="w-full border-2 p-4 rounded-2xl outline-none">
-                    
-                    <div class="p-5 bg-blue-50 rounded-3xl space-y-4">
-                        <input type="number" id="pincode" required placeholder="Pincode" onkeyup="handlePincode(this.value)" class="w-full border-2 p-4 rounded-2xl font-black outline-none">
-                        <select id="postOffice" class="w-full border-2 p-4 rounded-2xl bg-white"></select>
-                        <div class="flex gap-2">
-                            <input type="text" id="district" readonly placeholder="City" class="w-1/2 bg-white p-4 rounded-2xl font-bold text-xs">
-                            <input type="text" id="state" readonly placeholder="State" class="w-1/2 bg-white p-4 rounded-2xl font-bold text-xs">
+
+                    <!-- District + State (auto-filled, read-only) -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">District</label>
+                            <input type="text" id="district" readonly
+                                class="input-field !bg-slate-100 !text-slate-500 !cursor-default"
+                                placeholder="Auto">
+                        </div>
+                        <div>
+                            <label class="label">State</label>
+                            <input type="text" id="state" readonly
+                                class="input-field !bg-slate-100 !text-slate-500 !cursor-default"
+                                placeholder="Auto">
                         </div>
                     </div>
-                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg uppercase text-xs">Save & Print Slip</button>
-                </form>
-            </div>
-        </div>
-
-        <div id="searchSection" class="hidden space-y-6">
-            <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-200">
-                <input type="text" id="searchInput" placeholder="Order ID..." class="w-full bg-slate-100 p-5 rounded-2xl outline-none font-bold text-center text-blue-600 mb-4 uppercase">
-                <button onclick="searchOrder()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase">Find Record</button>
-                <div id="searchResult" class="hidden mt-8 p-6 bg-blue-600 text-white rounded-[2rem]">
-                    <p id="resName" class="text-xl font-black mb-4 uppercase"></p>
-                    <button id="reprintBtn" class="w-full bg-white text-blue-600 font-black py-4 rounded-2xl uppercase text-[10px]">Reprint Label</button>
                 </div>
-            </div>
-        </div>
-    </main>
 
-    <div id="printArea">
-        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 12px;">
-            <h1 style="margin: 0; font-size: 20px; font-weight: 900; text-transform: uppercase;">DELIVERY SLIP</h1>
-        </div>
-        
-        <div style="font-size: 13px; line-height: 1.5; margin-bottom: 12px;">
-            <p style="margin: 0; font-weight: bold; border-bottom: 1px solid #000; display: inline-block;">To,</p>
-            <p style="margin: 5px 0 0 0;">Customer Name - <span id="prName" style="font-weight: 900; font-size: 14px;"></span></p>
-            <p style="margin: 0;">Address - <span id="prAddr" style="font-weight: bold;"></span></p>
-            <p style="margin: 0;">Post Office - <span id="prPO"></span></p>
-            <p style="margin: 0;">City - <span id="prCity" style="font-weight: bold;"></span></p>
-            <p style="margin: 0;">State - <span id="prState"></span></p>
-            <p style="margin: 0;">Pincode - <span id="prPin" style="font-weight: bold;"></span></p>
-            <p style="margin: 0;">Landmark - <span id="prLandmark" style="font-weight: bold;"></span></p>
-            <p style="margin: 2px 0 0 0; font-size: 15px; font-weight: 900; border-top: 1px solid #eee;">Contact - <span id="prMob"></span></p>
-            <p style="margin: 0;">Alt Contact - <span id="prAltMob"></span></p>
-        </div>
+                <!-- ── SUBMIT ── -->
+                <button type="submit" id="submitBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[.98] text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 uppercase tracking-widest text-[11px] transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span id="submitBtnText">Save & Print Slip</span>
+                </button>
 
-        <div style="font-size: 11px; line-height: 1.3; border-top: 1px dashed #000; padding-top: 8px; margin-bottom: 10px;">
-            <p style="margin: 0; font-weight: bold; border-bottom: 1px solid #000; display: inline-block;">From,</p>
-            <p style="margin: 5px 0 0 0; font-weight: bold;">LENSKART PALI (Shop 3-4)</p>
-            <p style="margin: 0;">Ahinsa Complex, Suraj Pole, Pali, RJ 306401</p>
-            <p style="margin: 0;">Contact - +91 8290776551</p>
-        </div>
-
-        <div style="margin: 8px 0; text-align: center; border-top: 1px solid #000; padding-top: 8px;">
-            <p style="margin: 0; font-size: 10px; font-weight: bold;">BARCODE</p>
-            <div id="qrcode" style="display: flex; justify-content: center;"></div>
-            <p style="margin: 5px 0 0 0; font-size: 13px; font-weight: 900;">Order id:- <span id="prId"></span></p>
-        </div>
-        <div style="font-size: 9px; text-align: center; margin-top: 5px;">
-            <p style="font-weight: bold;">*** THANK YOU ***</p>
+            </form>
         </div>
     </div>
 
-    <script>
-        const SYSTEM_PASSWORD = "PALI_STORE_PRO"; 
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+    <!-- ══════════════════════
+         REPRINT SECTION
+    ══════════════════════ -->
+    <div id="searchSection" class="hidden space-y-4">
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <label class="label mb-3 block">Enter Order ID to Reprint</label>
+            <input type="text" id="searchInput"
+                placeholder="ORD…"
+                class="input-field mono !text-center !text-blue-600 !font-bold !text-lg uppercase mb-4"
+                oninput="this.value=this.value.toUpperCase()"
+                onkeydown="if(event.key==='Enter') searchOrder()">
+            <button onclick="searchOrder()"
+                class="w-full bg-slate-900 hover:bg-black text-white py-4 rounded-2xl font-bold text-[11px] uppercase tracking-widest transition-all">
+                <i class="fa-solid fa-magnifying-glass mr-2"></i>Find & Print
+            </button>
 
-        function validateSession() {
-            if (sessionStorage.getItem('pali_auth') !== 'true') {
-                const pass = prompt("Enter Password");
-                if (pass === SYSTEM_PASSWORD) sessionStorage.setItem('pali_auth', 'true');
-                else { document.body.innerHTML = ""; window.stop(); }
+            <div id="searchResult" class="hidden mt-5 p-5 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl shadow-xl shadow-blue-200">
+                <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">Record Found</p>
+                <p id="resName" class="text-xl font-bold mb-0.5"></p>
+                <p id="resId"   class="mono text-xs opacity-70 mb-1"></p>
+                <p id="resAddr" class="text-xs opacity-80 mb-4 line-clamp-2"></p>
+                <button id="reprintBtn"
+                    class="w-full bg-white text-blue-600 font-bold py-3 rounded-xl text-[11px] uppercase tracking-widest hover:bg-blue-50 transition-all">
+                    <i class="fa-solid fa-print mr-2"></i>Print Label Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ════════════════════════════════════════════
+     PRINT AREA — exactly matches sheet columns
+     A=orderId B=name C=address D=mobile E=alt
+     F=pincode G=postOffice H=district I=state
+════════════════════════════════════════════ -->
+<div id="printArea">
+
+    <!-- HEADER -->
+    <div style="text-align:center; border-bottom:2.5px solid #000; padding-bottom:5px; margin-bottom:8px;">
+        <div style="font-size:19px; font-weight:900; letter-spacing:1.5px; line-height:1.1;">LENSKART PALI</div>
+        <div style="font-size:8.5px; font-weight:700; letter-spacing:3.5px; color:#333; margin-top:2px;">DELIVERY SLIP</div>
+    </div>
+
+    <!-- TO SECTION -->
+    <div style="margin-bottom:8px;">
+        <div style="font-weight:900; font-size:10.5px; border-bottom:1px solid #000; display:inline-block; margin-bottom:5px;">TO :</div>
+        <table style="width:100%; border-collapse:collapse; font-size:10px; line-height:1.55;">
+            <tr>
+                <td style="width:80px; color:#555; vertical-align:top; padding-right:4px;">Customer</td>
+                <td style="font-weight:900; font-size:11px;" id="sl-name"></td>
+            </tr>
+            <tr>
+                <td style="color:#555; vertical-align:top; padding-right:4px;">Address</td>
+                <td id="sl-address"></td>
+            </tr>
+            <tr id="sl-po-row">
+                <td style="color:#555; padding-right:4px;">Post Office</td>
+                <td id="sl-postoffice"></td>
+            </tr>
+            <tr>
+                <td style="color:#555; padding-right:4px;">District</td>
+                <td id="sl-district"></td>
+            </tr>
+            <tr>
+                <td style="color:#555; padding-right:4px;">State</td>
+                <td id="sl-state"></td>
+            </tr>
+            <tr>
+                <td style="color:#555; padding-right:4px;">Pincode</td>
+                <td style="font-weight:700;" id="sl-pincode"></td>
+            </tr>
+            <tr>
+                <td style="color:#555; padding-right:4px;">Contact</td>
+                <td style="font-weight:700;" id="sl-mobile"></td>
+            </tr>
+            <tr id="sl-alt-row">
+                <td style="color:#555; padding-right:4px;">Alt Contact</td>
+                <td id="sl-altmobile"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- FROM SECTION -->
+    <div style="border-top:1.5px dashed #aaa; padding-top:6px; margin-bottom:8px; font-size:9.5px; line-height:1.6;">
+        <div style="font-weight:900; font-size:10.5px; border-bottom:1px solid #000; display:inline-block; margin-bottom:4px;">FROM :</div>
+        <div style="font-weight:700;">LENSKART PALI (Shop 3-4)</div>
+        <div>Ahinsa Complex, Suraj Pole, Pali, RJ 306401</div>
+        <div>Contact: +91 8290776551</div>
+    </div>
+
+    <!-- QR SECTION — single QR only -->
+    <div style="border-top:1.5px solid #000; padding-top:6px; text-align:center;">
+        <div style="font-size:8px; font-weight:700; letter-spacing:2.5px; margin-bottom:4px; color:#333;">SCAN QR</div>
+        <!-- single QR container -->
+        <div id="slip-qr" style="display:flex; justify-content:center; margin-bottom:4px;"></div>
+        <div style="font-size:10.5px; font-weight:900; letter-spacing:.3px;">
+            Order ID: <span id="sl-orderid" style="font-family:monospace;"></span>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="text-align:center; margin-top:7px; font-size:7.5px; color:#777; letter-spacing:2px;">
+        *** THANK YOU — LENSKART PALI ***
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+    // ── CONFIG ──────────────────────────────────────────────────
+    const SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+    const STAFF_ID    = "STORE_PALI_01";
+
+    // ── Date badge ───────────────────────────────────────────────
+    document.getElementById('navDate').textContent =
+        new Date().toLocaleDateString('en-IN', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+
+    // ── Toast ────────────────────────────────────────────────────
+    function toast(msg, dur = 3200) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), dur);
+    }
+
+    // ── Tab toggle ───────────────────────────────────────────────
+    function toggleView(mode) {
+        const isForm = (mode === 'form');
+        document.getElementById('orderFormSection').classList.toggle('hidden', !isForm);
+        document.getElementById('searchSection').classList.toggle('hidden',  isForm);
+        document.getElementById('tab-form').className   = `flex-1 py-3 text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all ${isForm ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`;
+        document.getElementById('tab-search').className = `flex-1 py-3 text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all ${!isForm ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`;
+    }
+
+    // ── Pincode API ──────────────────────────────────────────────
+    async function fetchPincode(pin) {
+        if (String(pin).length !== 6) return;
+        document.getElementById('pincodeStatus').classList.remove('hidden');
+        try {
+            const res  = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+            const data = await res.json();
+            if (data[0].Status === "Success") {
+                const offices = data[0].PostOffice;
+                document.getElementById('postOffice').innerHTML =
+                    offices.map(p => `<option value="${p.Name}">${p.Name}</option>`).join('');
+                document.getElementById('district').value = offices[0].District;
+                document.getElementById('state').value    = offices[0].State;
+                toast(`✓ ${offices.length} post offices loaded`);
+            } else {
+                toast('⚠ Pincode not found — fill manually');
             }
+        } catch {
+            toast('⚠ Network error — fill manually');
         }
-        validateSession();
+        document.getElementById('pincodeStatus').classList.add('hidden');
+    }
 
-        function toggleView(mode) {
-            document.getElementById('orderFormSection').classList.toggle('hidden', mode !== 'form');
-            document.getElementById('searchSection').classList.toggle('hidden', mode !== 'search');
-            document.getElementById('tab-form').className = mode === 'form' ? 'flex-1 py-3 text-[10px] font-black uppercase rounded-xl bg-blue-600 text-white' : 'flex-1 py-3 text-[10px] font-black uppercase rounded-xl text-slate-400';
-            document.getElementById('tab-search').className = mode === 'search' ? 'flex-1 py-3 text-[10px] font-black uppercase rounded-xl bg-blue-600 text-white' : 'flex-1 py-3 text-[10px] font-black uppercase rounded-xl text-slate-400';
-        }
+    // ── Form submit ──────────────────────────────────────────────
+    document.getElementById('orderForm').onsubmit = async (e) => {
+        e.preventDefault();
 
-        async function handlePincode(pin) {
-            if(pin.length === 6) {
-                const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
-                const data = await res.json();
-                if(data[0].Status === "Success") {
-                    const po = data[0].PostOffice;
-                    document.getElementById('postOffice').innerHTML = po.map(p => `<option value="${p.Name}">${p.Name}</option>`).join('');
-                    document.getElementById('district').value = po[0].District;
-                    document.getElementById('state').value = po[0].State;
-                }
-            }
-        }
+        const orderId = document.getElementById('orderId').value.trim().toUpperCase();
+        if (!orderId) { toast('⚠ Please enter an Order ID'); return; }
 
-        async function searchOrder() {
-            const id = document.getElementById('searchInput').value.toUpperCase();
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrder", orderId: id }) });
-                const result = await res.json();
-                if(result.status === "success") {
-                    document.getElementById('resName').innerText = result.data.name;
-                    document.getElementById('searchResult').classList.remove('hidden');
-                    document.getElementById('reprintBtn').onclick = () => { triggerPrint(id, result.data); };
-                } else alert("Order Not Found");
-            } catch (e) { alert("Cloud Error"); }
-        }
-
-        document.getElementById('orderForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.innerText = "Syncing...";
-            
-            const manualId = document.getElementById('manualId').value.toUpperCase();
-
-            const payload = {
-                action: "addOrder",
-                orderId: manualId, // Sending manual ID to sheet
-                name: document.getElementById('custName').value,
-                mobile: document.getElementById('mobile').value,
-                altMobile: document.getElementById('altMobile').value || "N/A",
-                landmark: document.getElementById('landmark').value || "N/A",
-                pincode: document.getElementById('pincode').value,
-                postOffice: document.getElementById('postOffice').value,
-                district: document.getElementById('district').value,
-                state: document.getElementById('state').value,
-                address: document.getElementById('address').value
-            };
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await res.json();
-                if(result.status === "success") { triggerPrint(manualId, payload); e.target.reset(); }
-                else alert(result.message || "Error saving data");
-            } catch (e) { alert("Save Error"); }
-            btn.disabled = false; btn.innerText = "Save & Print Slip";
+        // Build payload — matches EXACT sheet column order
+        const payload = {
+            action:     "addOrder",
+            orderId:    orderId,                                              // A
+            name:       document.getElementById('custName').value.trim(),    // B
+            address:    document.getElementById('address').value.trim(),     // C
+            mobile:     document.getElementById('mobile').value.trim(),      // D
+            altMobile:  document.getElementById('altMobile').value.trim() || "N/A", // E
+            pincode:    document.getElementById('pincode').value.trim(),     // F
+            postOffice: document.getElementById('postOffice').value || "N/A", // G
+            district:   document.getElementById('district').value || "N/A", // H
+            state:      document.getElementById('state').value || "N/A",    // I
+            staffId:    STAFF_ID                                             // J
         };
 
-        function triggerPrint(orderId, data) {
-            document.getElementById('prId').innerText = orderId;
-            document.getElementById('prName').innerText = data.name;
-            document.getElementById('prAddr').innerText = data.address;
-            document.getElementById('prPO').innerText = data.postOffice || "";
-            document.getElementById('prCity').innerText = data.district || "";
-            document.getElementById('prState').innerText = data.state || "";
-            document.getElementById('prPin').innerText = data.pincode;
-            document.getElementById('prLandmark').innerText = data.landmark;
-            document.getElementById('prMob').innerText = data.mobile;
-            document.getElementById('prAltMob').innerText = data.altMobile;
-            
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: orderId, width: 110, height: 110, correctLevel : QRCode.CorrectLevel.H });
-            setTimeout(() => { window.print(); }, 1200);
+        // Validate essentials
+        if (!payload.name || !payload.mobile || !payload.address || !payload.pincode) {
+            toast('⚠ Name, Address, Mobile and Pincode are required'); return;
         }
-    </script>
+
+        // Loading state
+        const btn  = document.getElementById('submitBtn');
+        const btnT = document.getElementById('submitBtnText');
+        btn.disabled = true;
+        btnT.textContent = 'Saving to cloud…';
+        btn.querySelector('i').className = 'fa-solid fa-spinner animate-spin';
+
+        try {
+            const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+
+            if (result.status === "success") {
+                triggerPrint(orderId, payload);
+                e.target.reset();
+                document.getElementById('postOffice').innerHTML = '<option value="">— enter pincode to auto-fill —</option>';
+                document.getElementById('district').value = '';
+                document.getElementById('state').value   = '';
+                toast('✓ Order saved! Printing slip…');
+            } else {
+                toast('✗ Save failed: ' + (result.message || 'Unknown error'));
+            }
+        } catch (err) {
+            toast('✗ Network error — check connection');
+        }
+
+        btn.disabled = false;
+        btnT.textContent = 'Save & Print Slip';
+        btn.querySelector('i').className = 'fa-solid fa-floppy-disk';
+    };
+
+    // ── Search / Reprint ─────────────────────────────────────────
+    async function searchOrder() {
+        const id = document.getElementById('searchInput').value.trim().toUpperCase();
+        if (!id) { toast('Please enter an Order ID'); return; }
+        toast('Searching cloud…');
+
+        try {
+            const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrder", orderId: id }) });
+            const result = await res.json();
+
+            if (result.status === "success") {
+                const d = result.data;
+                document.getElementById('resName').textContent = d.name || '—';
+                document.getElementById('resId').textContent   = id;
+                document.getElementById('resAddr').textContent = [d.address, d.postOffice, d.district].filter(v => v && v !== 'N/A').join(', ');
+                document.getElementById('searchResult').classList.remove('hidden');
+                document.getElementById('reprintBtn').onclick = () => triggerPrint(id, d);
+                toast('✓ Record found!');
+            } else {
+                document.getElementById('searchResult').classList.add('hidden');
+                toast('✗ Order not found: ' + id);
+            }
+        } catch {
+            toast('✗ Cloud error — try again');
+        }
+    }
+
+    // ── Print Engine ─────────────────────────────────────────────
+    // COLUMN MAP (matches Google Sheet exactly):
+    //   A=orderId  B=name  C=address  D=mobile  E=altMobile
+    //   F=pincode  G=postOffice  H=district  I=state  J=staffId
+    function triggerPrint(orderId, data) {
+        // Safe accessor — never shows "undefined" or "null"
+        const s = (v) => (v && v !== 'undefined' && v !== 'null' && v !== 'N/A' && String(v).trim() !== '')
+            ? String(v).trim() : null;
+
+        // Populate slip fields
+        document.getElementById('sl-orderid').textContent    = orderId;
+        document.getElementById('sl-name').textContent       = s(data.name)       || '—';
+        document.getElementById('sl-address').textContent    = s(data.address)    || '—';
+        document.getElementById('sl-district').textContent   = s(data.district)   || '—';
+        document.getElementById('sl-state').textContent      = s(data.state)      || '—';
+        document.getElementById('sl-pincode').textContent    = s(data.pincode)    || '—';
+        document.getElementById('sl-mobile').textContent     = s(data.mobile)     || '—';
+
+        // Post Office — hide row if missing
+        const po = s(data.postOffice);
+        if (po) {
+            document.getElementById('sl-postoffice').textContent = po;
+            document.getElementById('sl-po-row').style.display   = '';
+        } else {
+            document.getElementById('sl-po-row').style.display   = 'none';
+        }
+
+        // Alt mobile — hide row if missing / N/A
+        const alt = s(data.altMobile);
+        if (alt) {
+            document.getElementById('sl-altmobile').textContent = alt;
+            document.getElementById('sl-alt-row').style.display  = '';
+        } else {
+            document.getElementById('sl-alt-row').style.display  = 'none';
+        }
+
+        // ── Generate ONE QR code ──
+        const qrContainer = document.getElementById('slip-qr');
+        qrContainer.innerHTML = '';   // clear any previous QR
+        new QRCode(qrContainer, {
+            text:         orderId,
+            width:        72,
+            height:       72,
+            correctLevel: QRCode.CorrectLevel.M
+        });
+
+        // Small delay so QR renders before print dialog
+        setTimeout(() => window.print(), 1000);
+    }
+</script>
 </body>
 </html>
