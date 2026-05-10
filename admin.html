@@ -5,257 +5,266 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Admin | Lenskart Pali</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        .modal { transition: opacity 0.25s ease; visibility: hidden; opacity: 0; }
-        .modal.active { visibility: visible; opacity: 1; }
-        body.modal-active { overflow: hidden; }
+        #printArea { display: none; }
+        @media print {
+            body > *:not(#printArea) { display: none !important; }
+            #printArea {
+                display: block !important;
+                visibility: visible !important;
+                position: absolute;
+                left: 0; top: 0;
+                width: 58mm; padding: 1mm;
+                font-family: 'Calibri', sans-serif !important;
+                font-size: 16px !important;
+                font-weight: 700 !important;
+                color: #000 !important;
+                line-height: 1.1 !important;
+            }
+            #qrcode img { display: block !important; margin: 8px auto; width: 100px; height: 100px; }
+            @page { margin: 0; }
+        }
+        .modal-blur { backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.6); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans">
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
 
     <nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-2">
-                    <div class="bg-blue-600 p-1.5 rounded-lg text-xs"><i class="fa-solid fa-bolt"></i></div>
-                    <span class="font-black uppercase tracking-tighter text-sm hidden md:block">Lenskart Pali</span>
+        <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
+            <div class="flex items-center gap-4">
+                <span class="font-black uppercase tracking-tighter text-sm">Pali Master Admin</span>
+                <div class="flex h-full gap-2">
+                    <a href="index.html" class="px-3 py-2 text-[10px] font-bold uppercase opacity-60">Store</a>
+                    <a href="rider.html" class="px-3 py-2 text-[10px] font-bold uppercase opacity-60">Rider</a>
+                    <a href="admin.html" class="px-3 py-2 text-[10px] font-bold uppercase bg-purple-600 rounded-lg">Master</a>
                 </div>
-                <div class="flex h-full">
-                    <a href="index.html" class="flex items-center px-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent opacity-60 hover:opacity-100">
-                        <i class="fa-solid fa-store mr-2"></i> Store
-                    </a>
-                    <a href="rider.html" class="flex items-center px-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent opacity-60 hover:opacity-100">
-                        <i class="fa-solid fa-motorcycle mr-2"></i> Rider
-                    </a>
-                    <a href="admin.html" class="flex items-center px-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-purple-500 bg-slate-800 opacity-100" id="nav-admin">
-                        <i class="fa-solid fa-chart-line mr-2"></i> Master
-                    </a>
-                </div>
-                <button onclick="refreshData()" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl text-[10px] font-bold uppercase border border-slate-700">
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                </button>
             </div>
+            <button onclick="generateEOD()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i> EOD Report
+            </button>
         </div>
     </nav>
 
     <main class="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
-        
-        <div id="statsRow" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
-                <p class="text-slate-400 text-[10px] font-black uppercase mb-1">Total</p>
-                <h3 id="statTotal" class="text-3xl font-black text-slate-800">0</h3>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
+                <p class="text-[10px] font-black text-slate-400 uppercase">Total Orders</p>
+                <h2 id="stat-total" class="text-3xl font-black">0</h2>
             </div>
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
-                <p class="text-amber-500 text-[10px] font-black uppercase mb-1">Pending</p>
-                <h3 id="statPending" class="text-3xl font-black text-amber-500">0</h3>
-            </div>
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
-                <p class="text-blue-500 text-[10px] font-black uppercase mb-1">Shipped</p>
-                <h3 id="statShipped" class="text-3xl font-black text-blue-500">0</h3>
-            </div>
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-green-500">
-                <p class="text-green-600 text-[10px] font-black uppercase mb-1">Delivered</p>
-                <h3 id="statDelivered" class="text-3xl font-black text-green-600">0</h3>
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
+                <p class="text-[10px] font-black text-red-500 uppercase">TAT Breaches</p>
+                <h2 id="stat-breach" class="text-3xl font-black text-red-600">0</h2>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex gap-4">
-            <input type="text" id="adminSearch" onkeyup="filterTable()" placeholder="Search Order ID, Name, or Mobile..." 
-                   class="flex-1 px-4 py-3 bg-slate-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-            <button onclick="downloadCSV()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase transition hover:bg-black">
-                <i class="fa-solid fa-file-csv mr-2"></i>Export
-            </button>
-        </div>
-
-        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-50 border-b border-slate-100">
                         <tr>
-                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Order ID</th>
-                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
-                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">City</th>
-                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+                            <th class="p-5 text-[10px] font-black uppercase text-slate-400">Order Details</th>
+                            <th class="p-5 text-[10px] font-black uppercase text-slate-400">Status & TAT</th>
+                            <th class="p-5 text-[10px] font-black uppercase text-slate-400 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="masterTableBody" class="divide-y divide-slate-50 font-medium text-sm">
+                    <tbody id="masterTableBody" class="divide-y divide-slate-50">
                         </tbody>
                 </table>
-            </div>
-            <div id="loadingState" class="p-20 text-center flex flex-col items-center gap-4">
-                <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Syncing Cloud Database...</p>
             </div>
         </div>
     </main>
 
-    <div id="viewModal" class="modal fixed inset-0 z-[200] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="closeModals()"></div>
-        <div class="relative bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <div>
-                    <h3 class="text-xl font-black text-slate-800" id="v_id">ORD-000</h3>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Full Customer Profile</p>
-                </div>
-                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-900"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
+    <div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 modal-blur">
+        <div class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div class="p-6 bg-slate-50 border-b flex justify-between items-center">
+                <h3 id="v_id" class="text-lg font-black text-blue-600">ORD-000</h3>
+                <button onclick="closeModals()" class="text-slate-300 hover:text-slate-900"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
             </div>
             <div class="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+                <div class="space-y-4">
+                    <div class="p-4 bg-slate-50 rounded-2xl">
+                        <p id="v_name" class="font-black text-lg uppercase"></p>
+                        <p id="v_mob" class="text-sm font-bold text-blue-600"></p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-2xl">
+                        <p class="text-[9px] font-black text-slate-400 uppercase">Shipping Address</p>
+                        <p id="v_addr" class="text-xs font-bold leading-relaxed"></p>
+                        <p id="v_lm" class="mt-2 text-[9px] font-black text-blue-700 bg-blue-100 px-2 py-1 rounded inline-block"></p>
+                    </div>
+                </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="p-4 bg-slate-50 rounded-2xl">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Customer Name</p>
-                        <p id="v_name" class="font-black text-sm uppercase"></p>
+                    <div class="space-y-2">
+                        <p class="text-[8px] font-black text-center uppercase">Label Proof</p>
+                        <img id="v_img_label" src="" class="h-32 w-full object-cover rounded-2xl border-2 bg-slate-100">
                     </div>
-                    <div class="p-4 bg-slate-50 rounded-2xl">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Contact Details</p>
-                        <p id="v_mob" class="font-mono text-sm font-bold text-blue-600"></p>
+                    <div class="space-y-2">
+                        <p class="text-[8px] font-black text-center uppercase">Parcel Proof</p>
+                        <img id="v_img_parcel" src="" class="h-32 w-full object-cover rounded-2xl border-2 bg-slate-100">
                     </div>
                 </div>
-                <div class="p-4 bg-slate-50 rounded-2xl space-y-2">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase">Shipping Destination</p>
-                    <p id="v_addr" class="text-xs font-bold leading-relaxed"></p>
-                    <p id="v_landmark" class="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-1 rounded-lg inline-block"></p>
-                </div>
-                <div id="v_track_card" class="hidden p-5 bg-blue-600 text-white rounded-2xl shadow-lg">
-                    <p class="text-[9px] font-bold opacity-70 uppercase mb-2">Logistics Tracker</p>
-                    <p id="v_courier" class="font-black uppercase text-sm"></p>
-                    <p id="v_track_id" class="font-mono text-xs opacity-90"></p>
-                </div>
-                <div class="rounded-3xl overflow-hidden border-4 border-slate-100">
-                    <img id="v_img" src="" class="w-full h-auto hidden" alt="Parcel Photo">
-                    <div id="v_no_img" class="p-10 text-center text-xs text-slate-400 italic bg-slate-50">No Rider Photo Found</div>
-                </div>
+                <button id="modalPrintBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl uppercase text-xs shadow-lg flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-print"></i> Reprint Rugtek Slip
+                </button>
             </div>
         </div>
     </div>
 
+    <div id="globalLoader" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur">
+        <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4">
+            <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+            <p class="text-[10px] font-black uppercase tracking-widest">Getting data please wait</p>
+        </div>
+    </div>
+
+    <div id="printArea">
+        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
+            <h1 style="margin: 0; font-size: 20px;">DELIVERY SLIP</h1>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <p style="margin: 0; text-decoration: underline;">To,</p>
+            <p style="margin: 5px 0 0 0;">Customer Name - <span id="prName"></span></p>
+            <p style="margin: 0;">Address - <span id="prAddr"></span></p>
+            <p style="margin: 0;">City/PO - <span id="prPO"></span></p>
+            <p style="margin: 5px 0 0 0; border-top: 1px solid #000; padding-top: 5px;">Contact number - <span id="prMob"></span></p>
+        </div>
+        <div style="text-align: center; border-top: 2px solid #000; margin-top: 10px; padding-top: 10px;">
+            <div id="qrcode"></div>
+            <p style="margin: 5px 0 0 0;">Order id:- <span id="prId"></span></p>
+        </div>
+    </div>
+
     <script>
-        // --- CONFIG & SECURITY ---
-        const SYSTEM_PASSWORD = "PALI_STORE_PRO"; 
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
-
-        function validateSession() {
-            if (sessionStorage.getItem('pali_auth') !== 'true') {
-                const pass = prompt("LENSKART PALI: Enter Master Password");
-                if (pass === SYSTEM_PASSWORD) sessionStorage.setItem('pali_auth', 'true');
-                else { document.body.innerHTML = ""; window.stop(); }
-            }
-        }
-        validateSession();
-
-        let masterOrders = [];
-        let masterTracker = [];
+        let lightOrders = [];
 
         async function refreshData() {
-            document.getElementById('loadingState').classList.remove('hidden');
+            showLoading();
             try {
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
                 const result = await res.json();
-                masterOrders = result.orders.slice(1); // Remove header row
-                masterTracker = result.tracker.slice(1);
-                renderTable();
-                updateStats();
-            } catch (e) { alert("Network Connection Failure"); }
-            document.getElementById('loadingState').classList.add('hidden');
+                if(result.status === "success") {
+                    lightOrders = result.orders;
+                    renderTable();
+                }
+            } catch (e) { alert("Fetch Error"); }
+            hideLoading();
         }
 
         function renderTable() {
             const tbody = document.getElementById('masterTableBody');
-            tbody.innerHTML = "";
+            let breachCount = 0;
+            
+            tbody.innerHTML = lightOrders.reverse().map(order => {
+                const tatAlert = getTATAlert(order);
+                if(tatAlert.includes("Breach") || tatAlert.includes("Pending")) breachCount++;
 
-            [...masterOrders].reverse().forEach(order => {
-                const statusStyle = getStatusStyle(order[11]);
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="p-5 font-mono text-xs font-black text-blue-600">${order[0]}</td>
+                return `
+                    <tr>
                         <td class="p-5">
-                            <div class="font-black text-slate-800 text-sm uppercase">${order[1]}</div>
-                            <div class="text-[10px] text-slate-400 font-mono">${order[3]}</div>
+                            <p class="text-[11px] font-black text-blue-600">${order[0]}</p>
+                            <p class="text-sm font-bold uppercase">${order[1]}</p>
+                            <p class="text-[9px] font-black text-slate-400">${new Date(order[3]).toLocaleDateString()}</p>
                         </td>
                         <td class="p-5">
-                            <div class="text-xs font-bold text-slate-600">${order[7]}</div>
-                            <div class="text-[10px] text-slate-400">${order[8]}</div>
+                            <select onchange="updateStatus('${order[0]}', this.value)" class="bg-slate-50 border border-slate-200 text-[10px] font-black uppercase rounded-lg px-2 py-1 outline-none">
+                                <option value="Created" ${order[4] == 'Created' ? 'selected' : ''}>Created</option>
+                                <option value="Received" ${order[4] == 'Received' ? 'selected' : ''}>Received</option>
+                                <option value="Packed" ${order[4] == 'Packed' ? 'selected' : ''}>Packed</option>
+                                <option value="Dispatch" ${order[4] == 'Dispatch' ? 'selected' : ''}>Dispatch</option>
+                                <option value="Delivered" ${order[4] == 'Delivered' ? 'selected' : ''}>Delivered</option>
+                            </select>
+                            <div class="mt-1">${tatAlert}</div>
                         </td>
-                        <td class="p-5">
-                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${statusStyle}">${order[11]}</span>
-                        </td>
-                        <td class="p-5">
-                            <div class="flex justify-center gap-6">
-                                <button onclick="viewOrder('${order[0]}')" class="text-blue-500 hover:scale-125 transition"><i class="fa-solid fa-eye text-lg"></i></button>
-                                <button onclick="deleteOrder('${order[0]}')" class="text-red-300 hover:text-red-600 transition"><i class="fa-solid fa-trash-can text-lg"></i></button>
+                        <td class="p-5 text-center">
+                            <div class="flex justify-center gap-4">
+                                <button onclick="viewOrder('${order[0]}')" class="text-blue-500 hover:scale-110 transition"><i class="fa-solid fa-eye text-lg"></i></button>
+                                <button onclick="deleteOrder('${order[0]}')" class="text-slate-300 hover:text-red-600 transition"><i class="fa-solid fa-trash-can text-lg"></i></button>
                             </div>
                         </td>
                     </tr>
                 `;
-            });
+            }).join('');
+            
+            document.getElementById('stat-total').innerText = lightOrders.length;
+            document.getElementById('stat-breach').innerText = breachCount;
         }
 
-        function viewOrder(id) {
-            const order = masterOrders.find(o => o[0].toString() === id.toString());
-            const track = masterTracker.find(t => t[0].toString() === id.toString());
-
-            if (!order) return alert("Order ID Error");
-
-            // Modal Mapping
-            document.getElementById('v_id').innerText = id;
-            document.getElementById('v_name').innerText = order[1];
-            document.getElementById('v_mob').innerText = "Mob: " + order[3];
-            document.getElementById('v_addr').innerText = `${order[2]}, ${order[6]}, ${order[7]}, ${order[8]} - ${order[5]}`;
-            document.getElementById('v_landmark').innerText = "Landmark: " + (order[9] || 'N/A');
+        function getTATAlert(order) {
+            const status = order[4];
+            const createdDate = new Date(order[3]);
+            const lastUpdated = new Date(order[5]);
+            const now = new Date();
             
-            const trackCard = document.getElementById('v_track_card');
-            if(track) {
-                trackCard.classList.remove('hidden');
-                document.getElementById('v_courier').innerText = track[1];
-                document.getElementById('v_track_id').innerText = "ID: " + track[2];
-                if(track[6] && track[6].startsWith('http')) {
-                    document.getElementById('v_img').src = track[6];
-                    document.getElementById('v_img').classList.remove('hidden');
-                    document.getElementById('v_no_img').classList.add('hidden');
-                }
-            } else {
-                trackCard.classList.add('hidden');
-                document.getElementById('v_img').classList.add('hidden');
-                document.getElementById('v_no_img').classList.remove('hidden');
-            }
-            
-            document.getElementById('viewModal').classList.add('active');
-            document.body.classList.add('modal-active');
+            const diffDays = (now - createdDate) / (1000 * 60 * 60 * 24);
+            const diffHrs = (now - lastUpdated) / (1000 * 60 * 60);
+
+            if (status === "Created" && diffDays > 4) return `<span class="text-[8px] font-black text-red-600 bg-red-50 p-1 rounded uppercase animate-pulse">Pending Receive</span>`;
+            if (status === "Received" && diffHrs > 12) return `<span class="text-[8px] font-black text-orange-600 bg-orange-50 p-1 rounded uppercase">12H TAT Breach</span>`;
+            return `<span class="text-[8px] font-black text-slate-300 uppercase">${status}</span>`;
         }
 
-        async function deleteOrder(id) {
-            if(confirm(`Confirm permanent deletion of ${id}?`)) {
-                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "deleteOrder", orderId: id }) });
+        async function viewOrder(id) {
+            showLoading();
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
+                const result = await res.json();
+                const d = result.data;
+                
+                document.getElementById('v_id').innerText = d.order[0];
+                document.getElementById('v_name').innerText = d.order[1];
+                document.getElementById('v_mob').innerText = d.order[3];
+                document.getElementById('v_addr').innerText = `${d.order[2]}, ${d.order[6]}, Pali`;
+                document.getElementById('v_lm').innerText = "Landmark: " + d.order[9];
+                
+                document.getElementById('v_img_label').src = d.track ? d.track[6] : "";
+                document.getElementById('v_img_parcel').src = d.track ? d.track[7] : "";
+
+                document.getElementById('modalPrintBtn').onclick = () => {
+                    triggerPrint(id, { name: d.order[1], address: d.order[2], po: d.order[6], pin: d.order[5], lm: d.order[9], mob: d.order[3] });
+                };
+
+                document.getElementById('viewModal').classList.replace('hidden', 'flex');
+            } catch (e) { alert("Detail Fetch Error"); }
+            hideLoading();
+        }
+
+        async function updateStatus(id, newStatus) {
+            showLoading();
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "updateStatus", orderId: id, status: newStatus }) });
                 refreshData();
-            }
+            } catch (e) { alert("Status Update Failed"); }
+            hideLoading();
         }
 
-        function getStatusStyle(s) {
-            if(s === 'Pending') return 'bg-amber-100 text-amber-700';
-            if(s === 'Shipped') return 'bg-blue-100 text-blue-700';
-            if(s === 'Delivered') return 'bg-green-100 text-green-700';
-            return 'bg-slate-100 text-slate-500';
+        async function generateEOD() {
+            if(!confirm("Send EOD Report?")) return;
+            showLoading();
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) });
+                alert("EOD Sent!");
+            } catch (e) { alert("EOD Error"); }
+            hideLoading();
         }
 
-        function updateStats() {
-            document.getElementById('statTotal').innerText = masterOrders.length;
-            document.getElementById('statPending').innerText = masterOrders.filter(o => o[11] === 'Pending').length;
-            document.getElementById('statShipped').innerText = masterOrders.filter(o => o[11] === 'Shipped').length;
-            document.getElementById('statDelivered').innerText = masterOrders.filter(o => o[11] === 'Delivered').length;
+        function triggerPrint(id, data) {
+            document.getElementById('prId').innerText = id;
+            document.getElementById('prName').innerText = data.name;
+            document.getElementById('prAddr').innerText = data.address;
+            document.getElementById('prPO').innerText = data.po;
+            document.getElementById('prMob').innerText = data.mob;
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), { text: id, width: 100, height: 100 });
+            setTimeout(() => window.print(), 1000);
         }
 
-        function filterTable() {
-            const val = document.getElementById('adminSearch').value.toUpperCase();
-            const rows = document.querySelectorAll('#masterTableBody tr');
-            rows.forEach(row => row.style.display = row.innerText.toUpperCase().includes(val) ? "" : "none");
-        }
-
-        function closeModals() {
-            document.getElementById('viewModal').classList.remove('active');
-            document.body.classList.remove('modal-active');
-        }
+        function showLoading() { document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
+        function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
+        function closeModals() { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
 
         window.onload = refreshData;
     </script>
