@@ -175,6 +175,7 @@
     <script>
         // ⚠️ DO NOT FORGET TO PASTE YOUR LATEST GOOGLE APPS SCRIPT URL HERE ⚠️
         const SCRIPT_URL = "YOUR_SCRIPT_URL_HERE"; 
+        
         let tempPayload = null;
 
         function toggleView(v) {
@@ -242,17 +243,17 @@
                     if(shouldPrint) triggerPrint(tempPayload.orderId, tempPayload);
                     hideLoading();
                     document.getElementById('successPopup').classList.replace('hidden', 'flex');
-                } else if (result.message.includes("Duplicate")) {
+                } else if (result.message && result.message.includes("Duplicate")) {
                     hideLoading();
                     alert("DUPLICATE ORDER ID!\n\nThis ID is already used. Please use a unique ID.");
                 } else {
                     hideLoading();
-                    alert("Backend Error: " + result.message);
+                    alert("Backend Error: " + (result.message || "Unknown Error"));
                 }
             } catch (e) { 
                 hideLoading();
-                // 🛑 ADVANCED ERROR TRACKING ADDED HERE 🛑
-                alert("Detailed Sync Error: " + e.message + "\n\n1. Ensure Google Apps Script 'Who has access' is set to 'Anyone'.\n2. Did you paste the SCRIPT_URL?"); 
+                // 🛑 ADVANCED ERROR TRACKING (Catches GitHub connection blocks)
+                alert("Detailed Sync Error: " + e.message + "\n\n1. Ensure Google Apps Script 'Who has access' is set to 'Anyone'.\n2. Ensure your SCRIPT_URL is correctly pasted in the code."); 
             }
         }
 
@@ -276,12 +277,12 @@
                         name: d[1], address: d[2], postOffice: d[6], city: d[7], state: d[8], pincode: d[5], landmark: d[9], mobile: d[3], altMobile: d[4] 
                     });
                 } else {
-                    alert("Order ID Not Found.");
+                    alert("Order ID Not Found in Database.");
                     document.getElementById('searchResult').classList.add('hidden');
                 }
             } catch (e) { 
                 hideLoading();
-                alert("Detailed Search Error: " + e.message); 
+                alert("Detailed Search Error: " + e.message + "\n\nEnsure Google Apps Script is deployed to 'Anyone'."); 
             }
             hideLoading();
         }
