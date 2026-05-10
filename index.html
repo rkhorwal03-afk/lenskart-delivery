@@ -28,13 +28,11 @@
                 background: #ffffff !important;
                 line-height: 1.1 !important;
             }
-            /* Explicitly hides the canvas to prevent blank boxes on Android Print PDF */
             #qrcode canvas { display: none !important; }
             #qrcode img { display: block !important; margin: 5px auto; width: 90px; height: 90px; }
             @page { margin: 0; }
         }
         .modal-blur { backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.6); }
-        /* Remove arrows from number inputs */
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
@@ -117,8 +115,7 @@
     <div id="confirmModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 modal-blur">
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-200">
             <div class="p-6 bg-slate-50 border-b text-center"><h3 class="text-[10px] font-black uppercase text-slate-400">Review Data</h3></div>
-            <div id="confirmContent" class="p-8 space-y-2 text-sm font-bold">
-                </div>
+            <div id="confirmContent" class="p-8 space-y-2 text-sm font-bold"></div>
             
             <div class="p-6 space-y-3">
                 <button onclick="finalSync(true)" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-2">
@@ -176,7 +173,7 @@
     </div>
 
     <script>
-        // ⚠️ PASTE YOUR LATEST GOOGLE APPS SCRIPT URL HERE ⚠️
+        // ⚠️ DO NOT FORGET TO PASTE YOUR LATEST GOOGLE APPS SCRIPT URL HERE ⚠️
         const SCRIPT_URL = "YOUR_SCRIPT_URL_HERE"; 
         let tempPayload = null;
 
@@ -200,11 +197,9 @@
             }
         }
 
-        // --- SUBMISSION LOGIC ---
         document.getElementById('orderForm').onsubmit = (e) => {
             e.preventDefault();
             
-            // Format phone numbers by auto-attaching +91
             const mainMobile = document.getElementById('mobile').value;
             const altMobileRaw = document.getElementById('altMobile').value;
             const formattedMobile = "+91 " + mainMobile;
@@ -250,14 +245,17 @@
                 } else if (result.message.includes("Duplicate")) {
                     hideLoading();
                     alert("DUPLICATE ORDER ID!\n\nThis ID is already used. Please use a unique ID.");
+                } else {
+                    hideLoading();
+                    alert("Backend Error: " + result.message);
                 }
             } catch (e) { 
                 hideLoading();
-                alert("Network Sync Error. Please check your internet connection."); 
+                // 🛑 ADVANCED ERROR TRACKING ADDED HERE 🛑
+                alert("Detailed Sync Error: " + e.message + "\n\n1. Ensure Google Apps Script 'Who has access' is set to 'Anyone'.\n2. Did you paste the SCRIPT_URL?"); 
             }
         }
 
-        // --- REPRINT SEARCH LOGIC ---
         async function searchOrder() {
             const id = document.getElementById('searchInput').value.toUpperCase().trim();
             if(!id) return;
@@ -267,7 +265,6 @@
                 const result = await res.json();
                 if(result.status === "success" && result.data.order) {
                     const d = result.data.order;
-                    // d[3] is Mobile, d[6] is PO, d[7] is City, d[8] is State
                     document.getElementById('resId').innerText = id;
                     document.getElementById('resName').innerText = d[1];
                     document.getElementById('resMob').innerText = d[3];
@@ -282,7 +279,10 @@
                     alert("Order ID Not Found.");
                     document.getElementById('searchResult').classList.add('hidden');
                 }
-            } catch (e) { alert("Fetch Error - Please try again."); }
+            } catch (e) { 
+                hideLoading();
+                alert("Detailed Search Error: " + e.message); 
+            }
             hideLoading();
         }
 
@@ -297,7 +297,6 @@
             document.getElementById('prLandmark').innerText = data.landmark;
             document.getElementById('prMob').innerText = data.mobile;
             document.getElementById('prAltMob').innerText = data.altMobile || "N/A";
-            
             document.getElementById('qrcode').innerHTML = "";
             new QRCode(document.getElementById("qrcode"), { text: id, width: 100, height: 100, correctLevel : QRCode.CorrectLevel.H });
             setTimeout(() => window.print(), 1000);
