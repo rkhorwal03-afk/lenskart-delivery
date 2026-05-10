@@ -11,7 +11,6 @@
     <style>
         #printArea { display: none; }
         
-        /* Rugtek Thermal Print Optimization */
         @media print {
             body > *:not(#printArea) { display: none !important; }
             #printArea {
@@ -27,7 +26,6 @@
                 background: #ffffff !important;
                 line-height: 1.1 !important;
             }
-            /* Explicitly hides the canvas to prevent blank boxes on Android Print PDF */
             #qrcode canvas { display: none !important; }
             #qrcode img { display: block !important; margin: 8px auto; width: 90px; height: 90px; }
             @page { margin: 0; }
@@ -76,8 +74,7 @@
                             <th class="p-5 text-[10px] font-black uppercase text-slate-400 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="masterTableBody" class="divide-y divide-slate-50">
-                        </tbody>
+                    <tbody id="masterTableBody" class="divide-y divide-slate-50"></tbody>
                 </table>
             </div>
         </div>
@@ -153,8 +150,7 @@
     </div>
 
     <script>
-        // ⚠️ PASTE YOUR LATEST GOOGLE APPS SCRIPT URL HERE ⚠️
-        const SCRIPT_URL = "YOUR_SCRIPT_URL_HERE"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec"; 
         let lightOrders = [];
 
         async function refreshData() {
@@ -236,7 +232,6 @@
                 document.getElementById('v_altmob').innerText = "Alt: " + (d[4] || "N/A");
                 
                 document.getElementById('v_addr').innerText = d[2];
-                // Using Dynamic City (d[7]) and State (d[8])
                 document.getElementById('v_location').innerText = `${d[6]}, ${d[7]}, ${d[8]} - ${d[5]}`;
                 document.getElementById('v_lm').innerText = "Landmark: " + d[9];
                 
@@ -244,17 +239,7 @@
                 document.getElementById('v_img_parcel').src = t ? t[7] : "";
 
                 document.getElementById('modalPrintBtn').onclick = () => {
-                    triggerPrint(id, { 
-                        name: d[1], 
-                        address: d[2], 
-                        po: d[6], 
-                        city: d[7], 
-                        state: d[8], 
-                        pin: d[5], 
-                        lm: d[9], 
-                        mob: d[3], 
-                        altMob: d[4] 
-                    });
+                    triggerPrint(id, { name: d[1], address: d[2], po: d[6], city: d[7], state: d[8], pin: d[5], lm: d[9], mob: d[3], altMob: d[4] });
                 };
 
                 document.getElementById('viewModal').classList.replace('hidden', 'flex');
