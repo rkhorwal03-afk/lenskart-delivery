@@ -11,7 +11,7 @@
     <style>
         #printArea { display: none; }
 
-        /* Rugtek Thermal Print Optimization (Calibri Bold 16px) */
+        /* Rugtek Thermal Print Optimization */
         @media print {
             body > *:not(#printArea) { display: none !important; }
             #printArea {
@@ -27,13 +27,15 @@
                 color: #000000 !important;
                 background: #ffffff !important;
                 line-height: 1.1 !important;
-                text-rendering: optimizeLegibility;
-                -webkit-font-smoothing: none;
             }
-            #qrcode img { display: block !important; margin: 8px auto; width: 100px; height: 100px; }
+            /* Explicitly hides the canvas to prevent blank boxes on Android Print PDF */
+            #qrcode canvas { display: none !important; }
+            #qrcode img { display: block !important; margin: 5px auto; width: 90px; height: 90px; }
             @page { margin: 0; }
         }
         .modal-blur { backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.6); }
+        /* Remove arrows from number inputs */
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
@@ -63,15 +65,27 @@
                     </div>
                     <input type="text" id="custName" required placeholder="Customer Name" class="w-full border-2 p-4 rounded-2xl outline-none font-bold uppercase">
                     <textarea id="address" required placeholder="Street Address" class="w-full border-2 p-4 rounded-2xl outline-none font-bold"></textarea>
+                    
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="tel" id="mobile" required placeholder="Mobile" class="border-2 p-4 rounded-2xl outline-none font-bold">
-                        <input type="tel" id="altMobile" placeholder="Alt Number" class="border-2 p-4 rounded-2xl outline-none font-bold">
+                        <div class="flex items-center border-2 rounded-2xl focus-within:border-blue-600 bg-white overflow-hidden">
+                            <span class="pl-4 pr-2 font-black text-slate-400 bg-slate-50 py-4">+91</span>
+                            <input type="tel" id="mobile" required pattern="[0-9]{10}" maxlength="10" placeholder="10 Digits" class="w-full p-4 pl-0 bg-transparent outline-none font-bold">
+                        </div>
+                        <div class="flex items-center border-2 rounded-2xl focus-within:border-blue-600 bg-white overflow-hidden">
+                            <span class="pl-4 pr-2 font-black text-slate-400 bg-slate-50 py-4">+91</span>
+                            <input type="tel" id="altMobile" pattern="[0-9]{10}" maxlength="10" placeholder="Optional" class="w-full p-4 pl-0 bg-transparent outline-none font-bold">
+                        </div>
                     </div>
+                    
                     <input type="text" id="landmark" placeholder="Landmark (Optional)" class="w-full border-2 p-4 rounded-2xl outline-none font-bold">
                     
                     <div class="p-5 bg-blue-50 rounded-3xl space-y-4 border border-blue-100">
-                        <input type="number" id="pincode" required placeholder="Pincode" onkeyup="handlePincode(this.value)" class="w-full border-2 p-4 rounded-2xl font-black outline-none">
+                        <input type="number" id="pincode" required placeholder="Pincode" onkeyup="handlePincode(this.value)" class="w-full border-2 p-4 rounded-2xl font-black outline-none bg-white">
                         <select id="postOffice" class="w-full border-2 p-4 rounded-2xl bg-white outline-none font-bold"></select>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="city" readonly placeholder="City" class="w-full border-2 border-transparent p-4 rounded-2xl bg-blue-100/50 outline-none font-bold text-blue-800 text-sm">
+                            <input type="text" id="state" readonly placeholder="State" class="w-full border-2 border-transparent p-4 rounded-2xl bg-blue-100/50 outline-none font-bold text-blue-800 text-sm">
+                        </div>
                     </div>
                     
                     <button type="submit" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl uppercase text-xs shadow-lg">Review & Save</button>
@@ -90,8 +104,9 @@
                     <div class="p-6 bg-slate-900 text-white rounded-[2rem] shadow-2xl">
                         <p id="resId" class="text-xl font-black font-mono text-blue-400"></p>
                         <p id="resName" class="font-bold uppercase mt-2 text-lg"></p>
-                        <p id="resMob" class="text-sm opacity-70"></p>
+                        <p id="resMob" class="text-sm font-bold text-green-400"></p>
                         <p id="resAddr" class="text-[10px] mt-2 opacity-60 leading-tight"></p>
+                        <p id="resLocation" class="text-[10px] font-bold text-blue-300 mt-1"></p>
                     </div>
                     <button id="reprintBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl uppercase text-xs shadow-xl">Print Label Now</button>
                 </div>
@@ -136,17 +151,23 @@
     </div>
 
     <div id="printArea">
-        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
+        <div style="text-align: center; border-bottom: 2.5px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
             <h1 style="margin: 0; font-size: 20px;">DELIVERY SLIP</h1>
         </div>
         <div style="margin-bottom: 10px;">
             <p style="margin: 0; text-decoration: underline;">To,</p>
             <p style="margin: 5px 0 0 0;">Customer Name - <span id="prName"></span></p>
             <p style="margin: 0;">Address - <span id="prAddr"></span></p>
-            <p style="margin: 0;">City/PO - <span id="prPO"></span></p>
+            <p style="margin: 0;">PO - <span id="prPO"></span></p>
+            <p style="margin: 0;">City - <span id="prCity"></span></p>
+            <p style="margin: 0;">State - <span id="prState"></span></p>
             <p style="margin: 0;">Pincode - <span id="prPin"></span></p>
             <p style="margin: 0;">Landmark - <span id="prLandmark"></span></p>
-            <p style="margin: 5px 0 0 0; border-top: 1px solid #000; padding-top: 5px;">Contact number - <span id="prMob"></span></p>
+            
+            <div style="border-top: 2px solid #000; margin-top: 6px; padding-top: 4px;">
+                <p style="margin: 0; font-weight: 900;">Contact - <span id="prMob"></span></p>
+                <p style="margin: 0;">Alt Contact - <span id="prAltMob"></span></p>
+            </div>
         </div>
         <div style="text-align: center; border-top: 2px solid #000; margin-top: 10px; padding-top: 10px;">
             <div id="qrcode"></div>
@@ -155,7 +176,8 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+        // ⚠️ PASTE YOUR LATEST GOOGLE APPS SCRIPT URL HERE ⚠️
+        const SCRIPT_URL = "YOUR_SCRIPT_URL_HERE"; 
         let tempPayload = null;
 
         function toggleView(v) {
@@ -172,22 +194,33 @@
                 if(data[0].Status === "Success") {
                     const po = data[0].PostOffice;
                     document.getElementById('postOffice').innerHTML = po.map(p => `<option value="${p.Name}">${p.Name}</option>`).join('');
+                    document.getElementById('city').value = po[0].District;
+                    document.getElementById('state').value = po[0].State;
                 }
             }
         }
 
-        // --- SUBMISSION & REVIEW LOGIC ---
+        // --- SUBMISSION LOGIC ---
         document.getElementById('orderForm').onsubmit = (e) => {
             e.preventDefault();
+            
+            // Format phone numbers by auto-attaching +91
+            const mainMobile = document.getElementById('mobile').value;
+            const altMobileRaw = document.getElementById('altMobile').value;
+            const formattedMobile = "+91 " + mainMobile;
+            const formattedAltMobile = altMobileRaw ? ("+91 " + altMobileRaw) : "N/A";
+
             tempPayload = {
                 action: "addOrder",
                 orderId: document.getElementById('manualId').value.toUpperCase().trim(),
                 name: document.getElementById('custName').value,
-                mobile: document.getElementById('mobile').value,
-                altMobile: document.getElementById('altMobile').value || "N/A",
+                mobile: formattedMobile,
+                altMobile: formattedAltMobile,
                 landmark: document.getElementById('landmark').value || "N/A",
                 pincode: document.getElementById('pincode').value,
                 postOffice: document.getElementById('postOffice').value,
+                city: document.getElementById('city').value || "N/A",
+                state: document.getElementById('state').value || "N/A",
                 address: document.getElementById('address').value
             };
 
@@ -197,6 +230,7 @@
                     <p>NAME: ${tempPayload.name.toUpperCase()}</p>
                     <p>MOB: ${tempPayload.mobile}</p>
                     <p class="text-[10px] opacity-60 leading-tight">${tempPayload.address.toUpperCase()}</p>
+                    <p class="text-[10px] text-blue-600">${tempPayload.city}, ${tempPayload.state} - ${tempPayload.pincode}</p>
                 </div>
             `;
             document.getElementById('confirmModal').classList.replace('hidden', 'flex');
@@ -215,15 +249,15 @@
                     document.getElementById('successPopup').classList.replace('hidden', 'flex');
                 } else if (result.message.includes("Duplicate")) {
                     hideLoading();
-                    alert("DUPLICATE ORDER ID!\n\nThis ID is already used. Please use a unique ID for Pali Store.");
+                    alert("DUPLICATE ORDER ID!\n\nThis ID is already used. Please use a unique ID.");
                 }
             } catch (e) { 
                 hideLoading();
-                alert("Network Sync Error. Please check your internet."); 
+                alert("Network Sync Error. Please check your internet connection."); 
             }
         }
 
-        // --- REPRINT SEARCH ---
+        // --- REPRINT SEARCH LOGIC ---
         async function searchOrder() {
             const id = document.getElementById('searchInput').value.toUpperCase().trim();
             if(!id) return;
@@ -233,17 +267,22 @@
                 const result = await res.json();
                 if(result.status === "success" && result.data.order) {
                     const d = result.data.order;
+                    // d[3] is Mobile, d[6] is PO, d[7] is City, d[8] is State
                     document.getElementById('resId').innerText = id;
                     document.getElementById('resName').innerText = d[1];
                     document.getElementById('resMob').innerText = d[3];
-                    document.getElementById('resAddr').innerText = `${d[2]}, ${d[6]}, Pali`;
+                    document.getElementById('resAddr').innerText = d[2];
+                    document.getElementById('resLocation').innerText = `${d[6]}, ${d[7]}, ${d[8]} - ${d[5]}`;
+                    
                     document.getElementById('searchResult').classList.remove('hidden');
-                    document.getElementById('reprintBtn').onclick = () => triggerPrint(id, { name: d[1], address: d[2], postOffice: d[6], pincode: d[5], landmark: d[9], mobile: d[3] });
+                    document.getElementById('reprintBtn').onclick = () => triggerPrint(id, { 
+                        name: d[1], address: d[2], postOffice: d[6], city: d[7], state: d[8], pincode: d[5], landmark: d[9], mobile: d[3], altMobile: d[4] 
+                    });
                 } else {
-                    alert("Order ID Not Found in Pali Master Data.");
+                    alert("Order ID Not Found.");
                     document.getElementById('searchResult').classList.add('hidden');
                 }
-            } catch (e) { alert("Fetch Error"); }
+            } catch (e) { alert("Fetch Error - Please try again."); }
             hideLoading();
         }
 
@@ -251,10 +290,14 @@
             document.getElementById('prId').innerText = id;
             document.getElementById('prName').innerText = data.name;
             document.getElementById('prAddr').innerText = data.address;
-            document.getElementById('prPO').innerText = data.postOffice;
+            document.getElementById('prPO').innerText = data.postOffice || "";
+            document.getElementById('prCity').innerText = data.city || "";
+            document.getElementById('prState').innerText = data.state || "";
             document.getElementById('prPin').innerText = data.pincode;
             document.getElementById('prLandmark').innerText = data.landmark;
             document.getElementById('prMob').innerText = data.mobile;
+            document.getElementById('prAltMob').innerText = data.altMobile || "N/A";
+            
             document.getElementById('qrcode').innerHTML = "";
             new QRCode(document.getElementById("qrcode"), { text: id, width: 100, height: 100, correctLevel : QRCode.CorrectLevel.H });
             setTimeout(() => window.print(), 1000);
