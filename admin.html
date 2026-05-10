@@ -3,561 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Dashboard | Lenskart Pali</title>
+    <title>Master Admin | Lenskart Pali</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Space Grotesk', sans-serif; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-
-        .modal { visibility: hidden; opacity: 0; transition: opacity .2s ease, visibility .2s ease; }
+        .modal { transition: opacity 0.25s ease; visibility: hidden; opacity: 0; }
         .modal.active { visibility: visible; opacity: 1; }
         body.modal-active { overflow: hidden; }
-
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-
-        /* Stat card accent bar */
-        .stat-card { position: relative; overflow: hidden; }
-        .stat-card::before {
-            content: '';
-            position: absolute; top: 0; left: 0;
-            width: 4px; height: 100%;
-            border-radius: 0 4px 4px 0;
-        }
-        .stat-card.total::before  { background: #64748b; }
-        .stat-card.pending::before { background: #f59e0b; }
-        .stat-card.shipped::before { background: #3b82f6; }
-        .stat-card.delivered::before { background: #22c55e; }
-
-        /* Table row hover */
-        #masterTableBody tr { transition: background .15s; }
-        #masterTableBody tr:hover { background: #f8fafc; }
-
-        /* Status badges */
-        .badge-pending   { background:#fef3c7; color:#d97706; border:1px solid #fde68a; }
-        .badge-shipped   { background:#dbeafe; color:#2563eb; border:1px solid #bfdbfe; }
-        .badge-delivered { background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; }
-        .badge-cancelled { background:#fee2e2; color:#dc2626; border:1px solid #fecaca; }
-        .badge-default   { background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; }
-
-        /* Toast */
-        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-            background: #0f172a; color: #fff; padding: 12px 24px; border-radius: 100px;
-            font-size: 12px; font-weight: 700; letter-spacing: .05em;
-            transition: transform .4s cubic-bezier(.34,1.56,.64,1);
-            z-index: 9999; white-space: nowrap; pointer-events: none; }
-        #toast.show { transform: translateX(-50%) translateY(0); }
-
-        /* Shimmer loading skeleton */
-        @keyframes shimmer { 0%{background-position:-200%} 100%{background-position:200%} }
-        .skeleton {
-            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 8px;
-        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="bg-slate-50 text-slate-900 font-sans">
 
-<!-- ════════════════════════════════════════
-     SHARED NAV (Store + Master)
-════════════════════════════════════════ -->
-<nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl">
-    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-14">
-        <!-- Brand -->
-        <div class="flex items-center gap-2.5">
-            <div class="bg-blue-600 w-7 h-7 rounded-lg flex items-center justify-center text-xs shadow-lg shadow-blue-600/30">
-                <i class="fa-solid fa-eye"></i>
+    <nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <div class="bg-blue-600 p-1.5 rounded-lg text-xs"><i class="fa-solid fa-bolt"></i></div>
+                    <span class="font-black uppercase tracking-tighter text-sm hidden md:block">Lenskart Pali</span>
+                </div>
+                <div class="flex h-full">
+                    <a href="index.html" class="flex items-center px-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent opacity-60 hover:opacity-100">
+                        <i class="fa-solid fa-store mr-2"></i> Store
+                    </a>
+                    <a href="rider.html" class="flex items-center px-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-transparent opacity-60 hover:opacity-100">
+                        <i class="fa-solid fa-motorcycle mr-2"></i> Rider
+                    </a>
+                    <a href="admin.html" class="flex items-center px-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-purple-500 bg-slate-800 opacity-100" id="nav-admin">
+                        <i class="fa-solid fa-chart-line mr-2"></i> Master
+                    </a>
+                </div>
+                <button onclick="refreshData()" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl text-[10px] font-bold uppercase border border-slate-700">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
             </div>
-            <span class="font-bold tracking-tight text-sm hidden sm:block">Lenskart <span class="text-blue-400">Pali</span></span>
         </div>
-        <!-- Tabs -->
-        <div class="flex h-full">
-            <a href="index.html"
-               class="flex items-center gap-2 px-5 text-[11px] font-bold uppercase tracking-widest border-b-2 border-transparent text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
-                <i class="fa-solid fa-store"></i> Store
-            </a>
-            <a href="admin.html"
-               class="flex items-center gap-2 px-5 text-[11px] font-bold uppercase tracking-widest border-b-2 border-blue-500 text-white bg-slate-800">
-                <i class="fa-solid fa-chart-line text-blue-400"></i> Master
-            </a>
-        </div>
-        <!-- Quick actions -->
-        <div class="flex items-center gap-2">
-            <button onclick="window.open('index.html','_blank')"
-                class="hidden md:flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">
-                <i class="fa-solid fa-plus"></i> New Order
-            </button>
-            <button onclick="refreshData()"
-                class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all" id="refreshBtn">
-                <i class="fa-solid fa-arrows-rotate"></i>
-                <span class="hidden md:block">Refresh</span>
-            </button>
-        </div>
-    </div>
-</nav>
+    </nav>
 
-<main class="max-w-7xl mx-auto px-4 py-6 space-y-5">
+    <main class="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
+        
+        <div id="statsRow" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                <p class="text-slate-400 text-[10px] font-black uppercase mb-1">Total</p>
+                <h3 id="statTotal" class="text-3xl font-black text-slate-800">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                <p class="text-amber-500 text-[10px] font-black uppercase mb-1">Pending</p>
+                <h3 id="statPending" class="text-3xl font-black text-amber-500">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
+                <p class="text-blue-500 text-[10px] font-black uppercase mb-1">Shipped</p>
+                <h3 id="statShipped" class="text-3xl font-black text-blue-500">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 border-l-4 border-l-green-500">
+                <p class="text-green-600 text-[10px] font-black uppercase mb-1">Delivered</p>
+                <h3 id="statDelivered" class="text-3xl font-black text-green-600">0</h3>
+            </div>
+        </div>
 
-    <!-- ── STATS ── -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="stat-card total bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Orders</p>
-            <div class="flex items-end justify-between">
-                <h3 id="statTotal" class="text-3xl font-bold text-slate-800">—</h3>
-                <i class="fa-solid fa-box-open text-slate-200 text-2xl"></i>
-            </div>
-        </div>
-        <div class="stat-card pending bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-            <p class="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-2">Pending</p>
-            <div class="flex items-end justify-between">
-                <h3 id="statPending" class="text-3xl font-bold text-amber-500">—</h3>
-                <i class="fa-solid fa-clock text-amber-100 text-2xl"></i>
-            </div>
-        </div>
-        <div class="stat-card shipped bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-            <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">Shipped</p>
-            <div class="flex items-end justify-between">
-                <h3 id="statShipped" class="text-3xl font-bold text-blue-500">—</h3>
-                <i class="fa-solid fa-truck text-blue-100 text-2xl"></i>
-            </div>
-        </div>
-        <div class="stat-card delivered bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-            <p class="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-2">Delivered</p>
-            <div class="flex items-end justify-between">
-                <h3 id="statDelivered" class="text-3xl font-bold text-green-500">—</h3>
-                <i class="fa-solid fa-circle-check text-green-100 text-2xl"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── CONTROLS ── -->
-    <div class="bg-white px-4 py-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-3 items-center">
-        <div class="relative w-full">
-            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
-            <input type="text" id="adminSearch" oninput="filterTable()"
-                placeholder="Search by Order ID, Name, Mobile, City…"
-                class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-blue-400 text-sm transition-all">
-        </div>
-        <div class="flex gap-2 w-full md:w-auto shrink-0">
-            <select id="statusFilter" onchange="filterTable()"
-                class="border border-slate-100 bg-slate-50 rounded-xl px-4 py-3 text-xs font-bold outline-none text-slate-600 cursor-pointer">
-                <option value="">All Status</option>
-                <option value="Pending">Pending</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
-            </select>
-            <button onclick="downloadCSV()"
-                class="bg-slate-800 hover:bg-black text-white px-5 py-3 rounded-xl font-bold text-xs uppercase whitespace-nowrap transition-all">
-                <i class="fa-solid fa-file-csv mr-1.5"></i> CSV
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex gap-4">
+            <input type="text" id="adminSearch" onkeyup="filterTable()" placeholder="Search Order ID, Name, or Mobile..." 
+                   class="flex-1 px-4 py-3 bg-slate-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <button onclick="downloadCSV()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase transition hover:bg-black">
+                <i class="fa-solid fa-file-csv mr-2"></i>Export
             </button>
         </div>
+
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Order ID</th>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">City</th>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                            <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterTableBody" class="divide-y divide-slate-50 font-medium text-sm">
+                        </tbody>
+                </table>
+            </div>
+            <div id="loadingState" class="p-20 text-center flex flex-col items-center gap-4">
+                <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Syncing Cloud Database...</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="viewModal" class="modal fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="closeModals()"></div>
+        <div class="relative bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 class="text-xl font-black text-slate-800" id="v_id">ORD-000</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Full Customer Profile</p>
+                </div>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-900"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
+            </div>
+            <div class="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 rounded-2xl">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Customer Name</p>
+                        <p id="v_name" class="font-black text-sm uppercase"></p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-2xl">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Contact Details</p>
+                        <p id="v_mob" class="font-mono text-sm font-bold text-blue-600"></p>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl space-y-2">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Shipping Destination</p>
+                    <p id="v_addr" class="text-xs font-bold leading-relaxed"></p>
+                    <p id="v_landmark" class="text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-1 rounded-lg inline-block"></p>
+                </div>
+                <div id="v_track_card" class="hidden p-5 bg-blue-600 text-white rounded-2xl shadow-lg">
+                    <p class="text-[9px] font-bold opacity-70 uppercase mb-2">Logistics Tracker</p>
+                    <p id="v_courier" class="font-black uppercase text-sm"></p>
+                    <p id="v_track_id" class="font-mono text-xs opacity-90"></p>
+                </div>
+                <div class="rounded-3xl overflow-hidden border-4 border-slate-100">
+                    <img id="v_img" src="" class="w-full h-auto hidden" alt="Parcel Photo">
+                    <div id="v_no_img" class="p-10 text-center text-xs text-slate-400 italic bg-slate-50">No Rider Photo Found</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- ── TABLE ── -->
-    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <!-- Loading skeleton -->
-        <div id="loadingState" class="p-8 space-y-4">
-            <div class="skeleton h-10 w-full"></div>
-            <div class="skeleton h-10 w-full"></div>
-            <div class="skeleton h-10 w-5/6"></div>
-            <div class="skeleton h-10 w-full"></div>
-            <div class="skeleton h-10 w-4/5"></div>
-            <div class="text-center pt-2 text-xs text-slate-400 font-semibold animate-pulse">Syncing with Google Sheets…</div>
-        </div>
-        <div class="overflow-x-auto hidden" id="tableWrapper">
-            <table class="w-full text-left border-collapse min-w-[700px]">
-                <thead class="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                        <th class="px-5 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Order</th>
-                        <th class="px-5 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer</th>
-                        <th class="px-5 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Location</th>
-                        <th class="px-5 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                        <th class="px-5 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Actions</th>
+    <script>
+        // --- CONFIG & SECURITY ---
+        const SYSTEM_PASSWORD = "PALI_STORE_PRO"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+
+        function validateSession() {
+            if (sessionStorage.getItem('pali_auth') !== 'true') {
+                const pass = prompt("LENSKART PALI: Enter Master Password");
+                if (pass === SYSTEM_PASSWORD) sessionStorage.setItem('pali_auth', 'true');
+                else { document.body.innerHTML = ""; window.stop(); }
+            }
+        }
+        validateSession();
+
+        let masterOrders = [];
+        let masterTracker = [];
+
+        async function refreshData() {
+            document.getElementById('loadingState').classList.remove('hidden');
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
+                const result = await res.json();
+                masterOrders = result.orders.slice(1); // Remove header row
+                masterTracker = result.tracker.slice(1);
+                renderTable();
+                updateStats();
+            } catch (e) { alert("Network Connection Failure"); }
+            document.getElementById('loadingState').classList.add('hidden');
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('masterTableBody');
+            tbody.innerHTML = "";
+
+            [...masterOrders].reverse().forEach(order => {
+                const statusStyle = getStatusStyle(order[11]);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="p-5 font-mono text-xs font-black text-blue-600">${order[0]}</td>
+                        <td class="p-5">
+                            <div class="font-black text-slate-800 text-sm uppercase">${order[1]}</div>
+                            <div class="text-[10px] text-slate-400 font-mono">${order[3]}</div>
+                        </td>
+                        <td class="p-5">
+                            <div class="text-xs font-bold text-slate-600">${order[7]}</div>
+                            <div class="text-[10px] text-slate-400">${order[8]}</div>
+                        </td>
+                        <td class="p-5">
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${statusStyle}">${order[11]}</span>
+                        </td>
+                        <td class="p-5">
+                            <div class="flex justify-center gap-6">
+                                <button onclick="viewOrder('${order[0]}')" class="text-blue-500 hover:scale-125 transition"><i class="fa-solid fa-eye text-lg"></i></button>
+                                <button onclick="deleteOrder('${order[0]}')" class="text-red-300 hover:text-red-600 transition"><i class="fa-solid fa-trash-can text-lg"></i></button>
+                            </div>
+                        </td>
                     </tr>
-                </thead>
-                <tbody id="masterTableBody" class="divide-y divide-slate-50"></tbody>
-            </table>
-            <div id="emptyState" class="hidden p-16 text-center">
-                <i class="fa-solid fa-box-open text-slate-200 text-5xl mb-4"></i>
-                <p class="text-sm font-bold text-slate-400">No orders match your filter</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Record count footer -->
-    <div id="recordCount" class="hidden text-center text-xs text-slate-400 font-semibold pb-2"></div>
-
-</main>
-
-<!-- ════════ VIEW MODAL ════════ -->
-<div id="viewModal" class="modal fixed inset-0 z-[200] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeModals()"></div>
-    <div class="relative bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden">
-        <!-- Modal header -->
-        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-            <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Order Dossier</p>
-                <h3 class="text-xl font-bold text-slate-800 mono" id="v_id"></h3>
-            </div>
-            <button onclick="closeModals()" class="text-slate-300 hover:text-slate-700 transition-colors">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-        </div>
-        <!-- Modal body -->
-        <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto scrollbar-hide">
-            <div class="grid grid-cols-2 gap-3">
-                <div class="p-4 bg-slate-50 rounded-2xl">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Customer</p>
-                    <p id="v_name" class="font-bold text-sm"></p>
-                </div>
-                <div class="p-4 bg-slate-50 rounded-2xl">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Contact</p>
-                    <p id="v_mob" class="mono text-sm font-bold text-blue-600"></p>
-                </div>
-            </div>
-            <div class="p-4 bg-slate-50 rounded-2xl">
-                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Full Address</p>
-                <p id="v_addr" class="text-xs font-medium leading-relaxed text-slate-700"></p>
-            </div>
-            <div id="v_status_row" class="p-4 bg-slate-50 rounded-2xl flex items-center justify-between">
-                <div>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Status</p>
-                    <span id="v_status_badge" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase"></span>
-                </div>
-                <div>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Date</p>
-                    <p id="v_date" class="text-xs font-semibold text-slate-600"></p>
-                </div>
-            </div>
-            <!-- Tracking -->
-            <div id="v_track_card" class="hidden p-4 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-200">
-                <p class="text-[9px] font-bold opacity-70 uppercase mb-2">Tracking Info</p>
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p id="v_courier" class="font-bold uppercase text-sm"></p>
-                        <p id="v_track_id" class="mono text-xs opacity-90 mt-0.5"></p>
-                    </div>
-                    <i class="fa-solid fa-truck-fast text-2xl opacity-30"></i>
-                </div>
-            </div>
-            <!-- Parcel photo -->
-            <div>
-                <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Parcel Verification Photo</p>
-                <div class="rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-50">
-                    <img id="v_img" src="" class="w-full h-auto object-cover hidden" alt="Parcel">
-                    <div id="v_no_img" class="p-10 text-center text-xs text-slate-400 italic">
-                        <i class="fa-regular fa-image text-3xl text-slate-200 mb-2 block"></i>
-                        No photo uploaded for this order
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Modal footer -->
-        <div class="px-6 pb-5 pt-3 border-t border-slate-50 flex gap-3">
-            <button onclick="openEditFromView()" class="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-black transition-all">
-                <i class="fa-solid fa-pen mr-1.5"></i> Edit
-            </button>
-            <button onclick="closeModals()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all">
-                Close
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ════════ EDIT MODAL ════════ -->
-<div id="editModal" class="modal fixed inset-0 z-[200] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeModals()"></div>
-    <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-6">
-        <div class="flex justify-between items-center mb-5">
-            <h3 class="text-base font-bold uppercase">Update Record</h3>
-            <button onclick="closeModals()" class="text-slate-300 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="space-y-4">
-            <input type="hidden" id="edit_id">
-            <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Delivery Status</label>
-                <select id="edit_status" class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 font-bold outline-none text-sm focus:border-blue-400 transition-all">
-                    <option value="Pending">Pending</option>
-                    <option value="Shipped">Shipped</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Cancelled">Cancelled</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Customer Name</label>
-                <input type="text" id="edit_name" class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium outline-none text-sm focus:border-blue-400 transition-all">
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Mobile</label>
-                <input type="text" id="edit_mob" class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 font-mono font-bold outline-none text-sm focus:border-blue-400 transition-all">
-            </div>
-            <div class="flex gap-3 pt-1">
-                <button onclick="saveEdits()" id="saveEditBtn"
-                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-blue-100">
-                    <i class="fa-solid fa-check mr-1.5"></i> Save Changes
-                </button>
-                <button onclick="deleteFromEdit()"
-                    class="px-5 bg-red-50 hover:bg-red-100 text-red-500 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all border border-red-100">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Toast -->
-<div id="toast"></div>
-
-<script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
-    let masterOrders  = [];
-    let masterTracker = [];
-    let currentViewId = null;
-
-    // ── Toast ──
-    function showToast(msg, dur = 3000) {
-        const t = document.getElementById('toast');
-        t.textContent = msg; t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), dur);
-    }
-
-    // ── Load data ──
-    async function refreshData() {
-        const btn = document.getElementById('refreshBtn');
-        btn.querySelector('i').classList.add('animate-spin');
-        document.getElementById('loadingState').classList.remove('hidden');
-        document.getElementById('tableWrapper').classList.add('hidden');
-        document.getElementById('recordCount').classList.add('hidden');
-
-        try {
-            const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
-            const result = await res.json();
-            masterOrders  = result.orders.slice(1).reverse();
-            masterTracker = result.tracker.slice(1);
-            renderTable();
-            updateStats();
-            showToast(`✓ Synced — ${masterOrders.length} orders loaded`);
-        } catch(e) {
-            showToast('✗ Sync failed — check connection');
+                `;
+            });
         }
 
-        document.getElementById('loadingState').classList.add('hidden');
-        document.getElementById('tableWrapper').classList.remove('hidden');
-        btn.querySelector('i').classList.remove('animate-spin');
-    }
+        function viewOrder(id) {
+            const order = masterOrders.find(o => o[0].toString() === id.toString());
+            const track = masterTracker.find(t => t[0].toString() === id.toString());
 
-    // ── Render table ──
-    function renderTable(orders = masterOrders) {
-        const tbody = document.getElementById('masterTableBody');
-        const empty = document.getElementById('emptyState');
-        tbody.innerHTML = '';
+            if (!order) return alert("Order ID Error");
 
-        if (!orders.length) {
-            empty.classList.remove('hidden');
-            document.getElementById('recordCount').textContent = '0 records';
-            return;
-        }
-        empty.classList.add('hidden');
-
-        orders.forEach(o => {
-            const badge = getBadge(o[11]);
-            const date  = o[10] ? new Date(o[10]).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'2-digit' }) : '—';
-            tbody.innerHTML += `
-            <tr>
-                <td class="px-5 py-4">
-                    <div class="text-xs font-bold text-blue-600 mono">${o[0]}</div>
-                    <div class="text-[10px] text-slate-400 mt-0.5">${date}</div>
-                </td>
-                <td class="px-5 py-4">
-                    <div class="font-bold text-sm text-slate-800">${o[1]}</div>
-                    <div class="text-[11px] text-slate-400 mono mt-0.5">${o[3]}</div>
-                </td>
-                <td class="px-5 py-4">
-                    <div class="text-xs font-semibold text-slate-600">${o[6] || '—'}</div>
-                    <div class="text-[10px] text-slate-400">${o[7] || ''} ${o[5] ? '– ' + o[5] : ''}</div>
-                </td>
-                <td class="px-5 py-4">
-                    <span class="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase ${badge}">${o[11] || 'Pending'}</span>
-                </td>
-                <td class="px-5 py-4">
-                    <div class="flex items-center gap-4">
-                        <button onclick="viewOrder('${o[0]}')" title="View" class="text-blue-400 hover:text-blue-600 transition-colors hover:scale-110 active:scale-95">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                        <button onclick="openEditModal('${o[0]}')" title="Edit" class="text-slate-300 hover:text-slate-700 transition-colors hover:scale-110 active:scale-95">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button onclick="deleteOrder('${o[0]}')" title="Delete" class="text-red-200 hover:text-red-500 transition-colors hover:scale-110 active:scale-95">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
-        });
-
-        document.getElementById('recordCount').textContent = `Showing ${orders.length} of ${masterOrders.length} records`;
-        document.getElementById('recordCount').classList.remove('hidden');
-    }
-
-    // ── Filter ──
-    function filterTable() {
-        const search = document.getElementById('adminSearch').value.toUpperCase();
-        const status = document.getElementById('statusFilter').value;
-        const filtered = masterOrders.filter(o => {
-            const text = o.join(' ').toUpperCase();
-            const matchText = !search || text.includes(search);
-            const matchStatus = !status || (o[11] || '').toLowerCase() === status.toLowerCase();
-            return matchText && matchStatus;
-        });
-        renderTable(filtered);
-    }
-
-    // ── Stats ──
-    function updateStats() {
-        document.getElementById('statTotal').textContent     = masterOrders.length;
-        document.getElementById('statPending').textContent   = masterOrders.filter(o => o[11] === 'Pending').length;
-        document.getElementById('statShipped').textContent   = masterOrders.filter(o => o[11] === 'Shipped').length;
-        document.getElementById('statDelivered').textContent = masterOrders.filter(o => o[11] === 'Delivered').length;
-    }
-
-    // ── Badge style ──
-    function getBadge(s) {
-        if (s === 'Pending')   return 'badge-pending';
-        if (s === 'Shipped')   return 'badge-shipped';
-        if (s === 'Delivered') return 'badge-delivered';
-        if (s === 'Cancelled') return 'badge-cancelled';
-        return 'badge-default';
-    }
-
-    // ── View order ──
-    function viewOrder(id) {
-        currentViewId = id;
-        const order = masterOrders.find(o => o[0] === id);
-        const track = masterTracker.find(t => t[0] === id);
-
-        document.getElementById('v_id').textContent   = id;
-        document.getElementById('v_name').textContent = order[1];
-        document.getElementById('v_mob').textContent  = order[3];
-        document.getElementById('v_addr').textContent = [order[2], order[6], order[7], order[5]].filter(Boolean).join(', ');
-        document.getElementById('v_date').textContent = order[10] ? new Date(order[10]).toLocaleDateString('en-IN') : '—';
-
-        const badge = getBadge(order[11]);
-        const sb = document.getElementById('v_status_badge');
-        sb.textContent  = order[11] || 'Pending';
-        sb.className = `px-3 py-1 rounded-full text-[10px] font-bold uppercase ${badge}`;
-
-        const trackCard = document.getElementById('v_track_card');
-        if (track) {
-            trackCard.classList.remove('hidden');
-            document.getElementById('v_courier').textContent  = track[1];
-            document.getElementById('v_track_id').textContent = track[2];
-            if (track[6] && track[6].includes('http')) {
-                document.getElementById('v_img').src = track[6];
-                document.getElementById('v_img').classList.remove('hidden');
-                document.getElementById('v_no_img').classList.add('hidden');
+            // Modal Mapping
+            document.getElementById('v_id').innerText = id;
+            document.getElementById('v_name').innerText = order[1];
+            document.getElementById('v_mob').innerText = "Mob: " + order[3];
+            document.getElementById('v_addr').innerText = `${order[2]}, ${order[6]}, ${order[7]}, ${order[8]} - ${order[5]}`;
+            document.getElementById('v_landmark').innerText = "Landmark: " + (order[9] || 'N/A');
+            
+            const trackCard = document.getElementById('v_track_card');
+            if(track) {
+                trackCard.classList.remove('hidden');
+                document.getElementById('v_courier').innerText = track[1];
+                document.getElementById('v_track_id').innerText = "ID: " + track[2];
+                if(track[6] && track[6].startsWith('http')) {
+                    document.getElementById('v_img').src = track[6];
+                    document.getElementById('v_img').classList.remove('hidden');
+                    document.getElementById('v_no_img').classList.add('hidden');
+                }
             } else {
+                trackCard.classList.add('hidden');
                 document.getElementById('v_img').classList.add('hidden');
                 document.getElementById('v_no_img').classList.remove('hidden');
             }
-        } else {
-            trackCard.classList.add('hidden');
-            document.getElementById('v_img').classList.add('hidden');
-            document.getElementById('v_no_img').classList.remove('hidden');
+            
+            document.getElementById('viewModal').classList.add('active');
+            document.body.classList.add('modal-active');
         }
-        toggleModal('viewModal');
-    }
 
-    // ── Open edit from view modal ──
-    function openEditFromView() {
-        closeModals();
-        setTimeout(() => openEditModal(currentViewId), 100);
-    }
+        async function deleteOrder(id) {
+            if(confirm(`Confirm permanent deletion of ${id}?`)) {
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "deleteOrder", orderId: id }) });
+                refreshData();
+            }
+        }
 
-    // ── Edit modal ──
-    function openEditModal(id) {
-        const order = masterOrders.find(o => o[0] === id);
-        currentViewId = id;
-        document.getElementById('edit_id').value     = id;
-        document.getElementById('edit_name').value   = order[1];
-        document.getElementById('edit_mob').value    = order[3];
-        document.getElementById('edit_status').value = order[11] || 'Pending';
-        toggleModal('editModal');
-    }
+        function getStatusStyle(s) {
+            if(s === 'Pending') return 'bg-amber-100 text-amber-700';
+            if(s === 'Shipped') return 'bg-blue-100 text-blue-700';
+            if(s === 'Delivered') return 'bg-green-100 text-green-700';
+            return 'bg-slate-100 text-slate-500';
+        }
 
-    // ── Save edits ──
-    async function saveEdits() {
-        const btn = document.getElementById('saveEditBtn');
-        btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i> Saving…';
-        btn.disabled = true;
-        const id = document.getElementById('edit_id').value;
-        const payload = {
-            action:  "fullUpdate",
-            orderId: id,
-            name:    document.getElementById('edit_name').value,
-            mobile:  document.getElementById('edit_mob').value,
-            status:  document.getElementById('edit_status').value,
-            address: (masterOrders.find(o => o[0] === id) || [])[2] || ''
-        };
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-            closeModals();
-            refreshData();
-            showToast('✓ Record updated');
-        } catch(e) { showToast('✗ Update failed'); }
-        btn.innerHTML = '<i class="fa-solid fa-check mr-1.5"></i> Save Changes';
-        btn.disabled = false;
-    }
+        function updateStats() {
+            document.getElementById('statTotal').innerText = masterOrders.length;
+            document.getElementById('statPending').innerText = masterOrders.filter(o => o[11] === 'Pending').length;
+            document.getElementById('statShipped').innerText = masterOrders.filter(o => o[11] === 'Shipped').length;
+            document.getElementById('statDelivered').innerText = masterOrders.filter(o => o[11] === 'Delivered').length;
+        }
 
-    // ── Delete ──
-    async function deleteOrder(id) {
-        if (!confirm(`Permanently delete order ${id}? This cannot be undone.`)) return;
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "deleteOrder", orderId: id }) });
-            refreshData();
-            showToast(`🗑 Order ${id} deleted`);
-        } catch(e) { showToast('✗ Delete failed'); }
-    }
+        function filterTable() {
+            const val = document.getElementById('adminSearch').value.toUpperCase();
+            const rows = document.querySelectorAll('#masterTableBody tr');
+            rows.forEach(row => row.style.display = row.innerText.toUpperCase().includes(val) ? "" : "none");
+        }
 
-    function deleteFromEdit() {
-        const id = document.getElementById('edit_id').value;
-        closeModals();
-        deleteOrder(id);
-    }
+        function closeModals() {
+            document.getElementById('viewModal').classList.remove('active');
+            document.body.classList.remove('modal-active');
+        }
 
-    // ── CSV Export ──
-    function downloadCSV() {
-        if (!masterOrders.length) { showToast('No data to export'); return; }
-        const headers = ['Order ID','Name','Address','Mobile','Alt Mobile','Pincode','Post Office','State','Status','Date'];
-        const rows = masterOrders.map(o =>
-            [o[0],o[1],`"${(o[2]||'').replace(/"/g,'""')}"`,o[3],o[4]||'',o[5]||'',o[6]||'',o[7]||'',o[11]||'',o[10]||''].join(',')
-        );
-        const csv  = [headers.join(','), ...rows].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url  = URL.createObjectURL(blob);
-        const a    = Object.assign(document.createElement('a'), {
-            href: url,
-            download: `LenskartPali_Orders_${new Date().toLocaleDateString('en-IN').replace(/\//g,'-')}.csv`
-        });
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('✓ CSV downloaded');
-    }
-
-    // ── Modal helpers ──
-    function toggleModal(id) {
-        document.getElementById(id).classList.add('active');
-        document.body.classList.add('modal-active');
-    }
-    function closeModals() {
-        document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-        document.body.classList.remove('modal-active');
-    }
-
-    window.onload = refreshData;
-</script>
+        window.onload = refreshData;
+    </script>
 </body>
 </html>
