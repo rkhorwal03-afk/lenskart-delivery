@@ -112,7 +112,9 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+        // ⚠️ PASTE YOUR LATEST GOOGLE APPS SCRIPT URL HERE ⚠️
+        const SCRIPT_URL = "YOUR_SCRIPT_URL_HERE"; 
+        
         let labelData = "";
         let parcelData = "";
 
@@ -147,7 +149,7 @@
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; // Optimal width for clear tracking IDs
+                    const MAX_WIDTH = 800; // Optimal width for clear tracking IDs while keeping size small
                     const scale = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH;
                     canvas.height = img.height * scale;
@@ -175,11 +177,14 @@
         async function syncToCloud() {
             const orderId = document.getElementById('orderIdSearch').value.toUpperCase().trim();
             const courier = document.getElementById('courier').value;
-            const trackingId = document.getElementById('trackingId').value.trim();
+            const trackingId = document.getElementById('trackingId').value.trim().toUpperCase();
 
             if (!orderId || !trackingId) {
                 alert("Please enter both Order ID and Tracking ID.");
                 return;
+            }
+            if (!labelData && !parcelData) {
+                if(!confirm("You haven't added any photos. Continue anyway?")) return;
             }
 
             showLoading();
@@ -189,7 +194,7 @@
                 orderId: orderId,
                 courier: courier,
                 trackingId: trackingId,
-                riderName: "PALI_RIDER",
+                riderName: "PALI_RIDER", // Fixed identifier
                 pickupDate: new Date().toLocaleDateString(),
                 trackingImg: labelData,
                 parcelImg: parcelData
@@ -216,7 +221,7 @@
         // --- LOCAL HISTORY MANAGER (Instant Load) ---
         function saveToLocalHistory(data) {
             let history = JSON.parse(localStorage.getItem('pali_rider_history') || '[]');
-            // Remove if editing existing
+            // Remove if editing an existing entry to avoid duplicates in history
             history = history.filter(item => item.id !== data.orderId);
             
             history.unshift({ 
@@ -259,7 +264,7 @@
             document.getElementById('courier').value = courier;
             document.getElementById('trackingId').value = tracking;
             
-            // Reset images for safety
+            // Reset images for safety so old photos aren't accidentally re-uploaded to a new scan
             labelData = ""; parcelData = "";
             document.getElementById('prev-label').classList.add('hidden');
             document.getElementById('prev-parcel').classList.add('hidden');
@@ -271,9 +276,7 @@
         // --- UTILS ---
         function showLoading() { document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
         function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
-        function resetRiderForm() {
-            location.reload();
-        }
+        function resetRiderForm() { location.reload(); }
     </script>
 </body>
 </html>
