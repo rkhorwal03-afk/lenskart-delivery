@@ -173,9 +173,7 @@
     </div>
 
     <script>
-        // ⚠️ DO NOT FORGET TO PASTE YOUR LATEST GOOGLE APPS SCRIPT URL HERE ⚠️
-        const SCRIPT_URL = "YOUR_SCRIPT_URL_HERE"; 
-        
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec"; 
         let tempPayload = null;
 
         function toggleView(v) {
@@ -252,7 +250,6 @@
                 }
             } catch (e) { 
                 hideLoading();
-                // 🛑 ADVANCED ERROR TRACKING (Catches GitHub connection blocks)
                 alert("Detailed Sync Error: " + e.message + "\n\n1. Ensure Google Apps Script 'Who has access' is set to 'Anyone'.\n2. Ensure your SCRIPT_URL is correctly pasted in the code."); 
             }
         }
