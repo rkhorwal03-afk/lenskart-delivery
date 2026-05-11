@@ -223,32 +223,31 @@
 
 <div id="printArea">
     
-    <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">
-        <h1 style="margin:0; font-size:18px; font-weight:bold;">DELIVERY SLIP</h1>
+    <div style="text-align:center; padding-bottom:5px; margin-bottom:10px;">
+        <h1 style="margin:0; font-size:18px; font-weight:bold; text-decoration: underline;">DELIVERY SLIP</h1>
     </div>
 
     <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4;">
-        <p style="margin:0; text-decoration: underline;">To,</p>
-        <p style="margin:4px 0 0 0;">Customer Name:- <span id="prName" style="font-weight:bold;"></span></p>
+        <p style="margin:0; font-weight:bold;">To,</p>
+        <p style="margin:2px 0 0 0;">Customer Name:- <span id="prName"></span></p>
         <p style="margin:2px 0 0 0;">Shipping Address:- <span id="prAddr"></span></p>
         <p style="margin:2px 0 0 0;">City:- <span id="prCity"></span></p>
         <p style="margin:2px 0 0 0;">State:- <span id="prState"></span></p>
         <p style="margin:2px 0 0 0;">Pincode:- <span id="prPin"></span></p>
         <p style="margin:2px 0 0 0;" id="prLandmarkLine">Landmark:- <span id="prLandmark"></span></p>
-        <p style="margin:4px 0 0 0;">Contact number:- <span id="prMob" style="font-weight:bold;"></span></p>
+        <p style="margin:2px 0 0 0;">Contact number:- <span id="prMob"></span></p>
         <p style="margin:2px 0 0 0;" id="prAltLine">Alt Number:- <span id="prAltMob"></span></p>
     </div>
 
-    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4; border-top: 1px dashed #000; padding-top: 8px;">
-        <p style="margin:0; text-decoration: underline;">From,</p>
-        <p style="margin:4px 0 0 0; font-weight:bold;">Lenskart Pali</p>
+    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4;">
+        <p style="margin:0; font-weight:bold;">From,</p>
         <p style="margin:2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Rajasthan 306401</p>
-        <p style="margin:2px 0 0 0; font-weight:bold;">Contact number:- 8290776551</p>
+        <p style="margin:2px 0 0 0;">Contact number:- 8290776551</p>
     </div>
 
-    <div style="text-align:center; border-top: 1px dashed #000; padding-top: 10px;">
+    <div style="text-align:center;">
         <div id="qrcode" style="display:flex; justify-content:center; margin: 0 auto 5px auto;"></div>
-        <p style="margin:0; font-size:14px; font-weight:bold;">Order id:- <span id="prId"></span></p>
+        <p style="margin:5px 0 0 0; font-size:14px; font-weight:bold;">Order id:- <span id="prId"></span></p>
     </div>
 
 </div>
@@ -368,7 +367,6 @@
         return `<span class="${cls} text-[7px] font-black px-1.5 py-0.5 rounded-md uppercase">${status}</span>`;
     }
 
-    // 🚀 FIXED: Helper to convert Google Drive view URLs to direct HTML img display URLs
     function getDriveImage(url) {
         if(!url) return "";
         if(url.includes("view?usp=drivesdk")) {
@@ -413,7 +411,6 @@
                 dispBlock.classList.add('hidden');
             }
 
-            // 🚀 FIXED: Images now load properly inside the admin panel!
             setImgSrc('v_img_label',   t ? getDriveImage(t[6]) : "");
             setImgSrc('v_img_parcel1', t ? getDriveImage(t[7]) : "");
             setImgSrc('v_img_parcel2', t ? getDriveImage(t[8]) : "");
@@ -422,8 +419,7 @@
                 triggerPrint(d[0], {
                     name:      d[1], address: d[2], po:  d[6],
                     city:      d[7], state:   d[8], pin: d[5],
-                    lm:        d[9], mob:     d[3], altMob: d[4],
-                    createdAt: formatDate(d[10])
+                    lm:        d[9], mob:     d[3], altMob: d[4]
                 }, t);
             };
 
@@ -457,7 +453,6 @@
         }
     }
 
-    // EXACT LINE-BY-LINE PRINT MAPPING
     function triggerPrint(orderId, data, track) {
         setText('prId', orderId);
         setText('prName', data.name || "");
