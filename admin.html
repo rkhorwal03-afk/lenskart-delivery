@@ -3,139 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lenskart Pali | Master Admin</title>
+    <title>Logistics Analysis | Lenskart Pali</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f0f2f5; }
         
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        
-        /* ── ADVANCE UI ELEMENTS ── */
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        .gradient-blue { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
-        .gradient-green { background: linear-gradient(135deg, #15803d 0%, #22c55e 100%); }
-        .gradient-purple { background: linear-gradient(135deg, #6b21a8 0%, #a855f7 100%); }
-        .gradient-orange { background: linear-gradient(135deg, #c2410c 0%, #f97316 100%); }
+        /* DATA TABLE STYLING */
+        .data-table { width: 100%; border-collapse: collapse; background: #fff; }
+        .data-table th { background: #e2e8f0; color: #475569; font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 12px; border: 1px solid #cbd5e1; }
+        .data-table td { padding: 10px 12px; font-size: 13px; border: 1px solid #e2e8f0; vertical-align: middle; }
+        .data-table tr:nth-child(even) { background-color: #f8fafc; }
+        .data-table tr:hover { background-color: #f1f5f9 !important; }
 
-        .status-badge { padding: 4px 10px; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        .Created { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-        .Dispatch { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-        .Delivered { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        /* ANALYTICAL BADGES */
+        .badge { display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 900; border-radius: 4px; border: 1px solid transparent; text-transform: uppercase; }
+        .badge-Created   { background: #e0f2fe; color: #0369a1; border-color: #7dd3fc; }
+        .badge-Received  { background: #fef9c3; color: #854d0e; border-color: #fde047; }
+        .badge-Packed    { background: #f3e8ff; color: #6b21a8; border-color: #d8b4fe; }
+        .badge-Dispatch  { background: #dcfce7; color: #166534; border-color: #86efac; }
+        .badge-Delivered { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+        .badge-TAT-BREACH { background: #fee2e2; color: #991b1b; border-color: #fca5a5; animation: pulse 2s infinite; }
 
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        /* PRINT SETTINGS */
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
-            #printArea { display: block !important; width: 54mm; margin: 0; padding: 2mm; color: #000; background: #fff; }
+            #printArea { display: block !important; width: 54mm; color: #000; background: #fff; padding: 2mm; }
             @page { margin: 0; size: 58mm auto; }
         }
     </style>
 </head>
-<body class="min-h-screen text-slate-800">
+<body class="text-slate-900">
 
-<nav class="sticky top-0 z-[100] bg-slate-900 text-white shadow-xl px-4 py-3">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/30">
-                <i class="fa-solid fa-glasses text-white"></i>
-            </div>
-            <div>
-                <h1 class="text-xs font-black uppercase tracking-tighter">Pali Admin</h1>
-                <p class="text-[9px] font-bold text-blue-400 opacity-80 uppercase">Lenskart Delivery System</p>
-            </div>
+<nav class="bg-slate-800 text-white px-4 py-3 border-b-4 border-blue-600">
+    <div class="max-w-[1400px] mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <span class="font-black text-lg tracking-tighter">DATA CENTER</span>
+            <div class="h-6 w-px bg-slate-600"></div>
+            <span class="text-xs font-bold text-slate-400">LENSKART PALI · BACK-OFFICE</span>
         </div>
         <div class="flex gap-2">
-            <button onclick="generateEOD()" class="bg-green-600/20 hover:bg-green-600 text-green-400 hover:text-white border border-green-600/30 px-4 py-2 rounded-xl text-[10px] font-black transition-all">
-                <i class="fa-solid fa-paper-plane mr-1"></i> EOD
+            <button onclick="generateEOD()" class="bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded font-black text-[10px] uppercase border border-white/20">
+                <i class="fa-solid fa-envelope mr-1"></i> Send EOD
             </button>
-            <button onclick="refreshData()" class="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl text-xs transition-all">
-                <i class="fa-solid fa-rotate-right"></i>
+            <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 px-4 py-1.5 rounded font-black text-[10px] uppercase shadow-lg">
+                <i class="fa-solid fa-rotate mr-1"></i> Reload
             </button>
         </div>
     </div>
 </nav>
 
-<div class="max-w-7xl mx-auto p-4 lg:p-6">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div class="gradient-blue p-5 rounded-[2rem] text-white shadow-xl shadow-blue-500/20">
-            <p class="text-[10px] font-black uppercase opacity-70">Total Orders</p>
-            <h3 id="stat-total" class="text-3xl font-black">0</h3>
+<div class="max-w-[1400px] mx-auto p-4 space-y-4">
+    
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-white p-4 border-l-4 border-slate-400 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase">Total Orders</p>
+            <h3 id="stat-total" class="text-2xl font-black">0</h3>
         </div>
-        <div class="gradient-purple p-5 rounded-[2rem] text-white shadow-xl shadow-purple-500/20">
-            <p class="text-[10px] font-black uppercase opacity-70">Created</p>
-            <h3 id="stat-created" class="text-3xl font-black">0</h3>
+        <div class="bg-white p-4 border-l-4 border-blue-500 shadow-sm">
+            <p class="text-[10px] font-black text-blue-500 uppercase">Created</p>
+            <h3 id="stat-created" class="text-2xl font-black">0</h3>
         </div>
-        <div class="gradient-orange p-5 rounded-[2rem] text-white shadow-xl shadow-orange-500/20">
-            <p class="text-[10px] font-black uppercase opacity-70">In Transit</p>
-            <h3 id="stat-dispatch" class="text-3xl font-black">0</h3>
+        <div class="bg-white p-4 border-l-4 border-green-500 shadow-sm">
+            <p class="text-[10px] font-black text-green-500 uppercase">In Transit</p>
+            <h3 id="stat-dispatch" class="text-2xl font-black">0</h3>
         </div>
-        <div class="gradient-green p-5 rounded-[2rem] text-white shadow-xl shadow-green-500/20">
-            <p class="text-[10px] font-black uppercase opacity-70">Completed</p>
-            <h3 id="stat-delivered" class="text-3xl font-black">0</h3>
+        <div class="bg-white p-4 border-l-4 border-orange-500 shadow-sm">
+            <p class="text-[10px] font-black text-orange-500 uppercase">Pending > 3 Days</p>
+            <h3 id="stat-breach" class="text-2xl font-black text-orange-600">0</h3>
+        </div>
+        <div class="hidden md:block bg-white p-4 border-l-4 border-slate-800 shadow-sm">
+            <p class="text-[10px] font-black text-slate-800 uppercase">System Status</p>
+            <h3 class="text-xs font-black text-green-600 mt-2"><i class="fa-solid fa-circle text-[8px] animate-pulse"></i> CLOUD ACTIVE</h3>
         </div>
     </div>
 
-    <div class="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-        <div class="p-6 border-b border-slate-50 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-4">
-            <h2 class="text-sm font-black uppercase text-slate-400">Orders Database</h2>
-            <div class="relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input id="searchBox" oninput="renderTable()" type="text" placeholder="Search by ID or Name..." 
-                    class="bg-white border border-slate-200 pl-10 pr-4 py-2.5 rounded-2xl text-xs font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 w-full md:w-64 transition-all">
-            </div>
+    <div class="bg-slate-700 p-3 rounded shadow-inner flex flex-wrap gap-4 items-center">
+        <div class="relative flex-1 min-w-[200px]">
+            <input id="searchBox" oninput="renderTable()" type="text" placeholder="Filter by ID, Name or Mobile..." 
+                class="w-full bg-slate-800 border border-slate-600 text-white px-4 py-2 text-xs font-bold rounded focus:border-blue-400 outline-none">
         </div>
-        
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">
-                        <th class="px-6 py-4">Order Details</th>
-                        <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4 text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="masterTableBody" class="divide-y divide-slate-50">
-                    </tbody>
-            </table>
-        </div>
+        <select id="statusFilter" onchange="renderTable()" class="bg-slate-800 border border-slate-600 text-white px-3 py-2 text-xs font-bold rounded outline-none">
+            <option value="">All Statuses</option>
+            <option value="Created">Created</option>
+            <option value="Received">Received</option>
+            <option value="Packed">Packed</option>
+            <option value="Dispatch">Dispatch</option>
+            <option value="Delivered">Delivered</option>
+        </select>
+        <button onclick="exportToCSV()" class="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 text-[10px] font-black uppercase rounded">
+            <i class="fa-solid fa-file-csv mr-1"></i> Export Data
+        </button>
+    </div>
+
+    <div class="bg-white border border-slate-300 shadow-xl overflow-x-auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order Date</th>
+                    <th>Order ID</th>
+                    <th>Customer Name</th>
+                    <th>Location (City)</th>
+                    <th>Current Status</th>
+                    <th class="text-center">Analysis & Actions</th>
+                </tr>
+            </thead>
+            <tbody id="masterTableBody">
+                </tbody>
+        </table>
     </div>
 </div>
 
-<div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 backdrop-blur-md bg-slate-900/40">
-    <div class="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-        <div class="p-8 space-y-6">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h3 id="v_id" class="text-2xl font-black text-blue-600 font-mono tracking-tighter"></h3>
-                    <p class="text-[10px] font-black uppercase text-slate-400 mt-1">Order Information</p>
-                </div>
-                <button onclick="closeModals()" class="bg-slate-100 hover:bg-red-50 hover:text-red-500 text-slate-400 p-3 rounded-2xl transition-all">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+<div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 bg-slate-900/80">
+    <div class="bg-white w-full max-w-2xl border-t-8 border-blue-600 shadow-2xl p-6">
+        <div class="flex justify-between border-b pb-4 mb-4">
+            <div>
+                <h3 id="v_id" class="text-xl font-black text-slate-800"></h3>
+                <p id="v_date_full" class="text-[10px] font-bold text-slate-400 uppercase mt-1"></p>
             </div>
-
+            <button onclick="closeModals()" class="text-slate-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-square-xmark"></i></button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-4">
-                <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                    <p id="v_name" class="text-lg font-black uppercase text-slate-800"></p>
-                    <p id="v_addr" class="text-xs font-bold text-slate-500 mt-2 leading-relaxed"></p>
+                <div class="bg-slate-50 p-4 border">
+                    <p class="text-[9px] font-black text-slate-400 uppercase">Customer Profile</p>
+                    <p id="v_name" class="font-black text-md text-blue-700"></p>
+                    <p id="v_mob" class="text-xs font-bold mt-1"></p>
+                    <p id="v_addr" class="text-[11px] font-medium text-slate-600 mt-2 leading-tight"></p>
                 </div>
-
-                <div id="parcelPhotosContainer" class="hidden grid grid-cols-3 gap-3">
-                    <a id="v_link_label" href="#" target="_blank" class="bg-blue-600 text-white p-4 rounded-2xl text-center shadow-lg shadow-blue-500/20 transition hover:-translate-y-1">
-                        <i class="fa-solid fa-barcode block mb-1"></i><span class="text-[9px] font-black uppercase">Label</span>
-                    </a>
-                    <a id="v_link_parcel1" href="#" target="_blank" class="bg-slate-800 text-white p-4 rounded-2xl text-center shadow-lg shadow-slate-800/20 transition hover:-translate-y-1">
-                        <i class="fa-solid fa-box block mb-1"></i><span class="text-[9px] font-black uppercase">Pic 1</span>
-                    </a>
-                    <a id="v_link_parcel2" href="#" target="_blank" class="bg-slate-800 text-white p-4 rounded-2xl text-center shadow-lg shadow-slate-800/20 transition hover:-translate-y-1">
-                        <i class="fa-solid fa-box-open block mb-1"></i><span class="text-[9px] font-black uppercase">Pic 2</span>
-                    </a>
+            </div>
+            <div class="space-y-4">
+                <div id="parcelPhotosContainer" class="hidden space-y-2">
+                    <p class="text-[9px] font-black text-slate-400 uppercase">Verification Files</p>
+                    <div class="flex flex-col gap-2">
+                        <a id="v_link_label" href="#" target="_blank" class="text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-file-arrow-up mr-2"></i>View Tracking Label</a>
+                        <a id="v_link_parcel1" href="#" target="_blank" class="text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box mr-2"></i>View Parcel Pic 1</a>
+                        <a id="v_link_parcel2" href="#" target="_blank" class="text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box-open mr-2"></i>View Parcel Pic 2</a>
+                    </div>
                 </div>
-
-                <button id="modalPrintBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[2rem] uppercase text-xs shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-print"></i> Reprint Thermal Slip
+                <button id="modalPrintBtn" class="w-full bg-slate-800 text-white font-black py-4 text-xs uppercase hover:bg-black transition">
+                    <i class="fa-solid fa-print mr-2"></i> Execute Print Slip
                 </button>
             </div>
         </div>
@@ -149,25 +162,18 @@
     </div>
     <div style="margin-bottom: 10px; font-size: 11pt; line-height: 1.4;">
         <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 10pt;">TO,</p>
-        <p style="margin: 4px 0 0 0;">Customer Name:- <span id="prName" style="text-transform: uppercase; font-weight: 900;"></span></p>
-        <p style="margin: 2px 0 0 0;">Address:- <span id="prAddr"></span></p>
-        <p style="margin: 2px 0 0 0;">City:- <span id="prCity"></span></p>
-        <p style="margin: 2px 0 0 0;">Pincode:- <span id="prPin"></span></p>
-        <p style="margin: 4px 0 0 0; font-weight: 900; font-size: 12pt;">Contact:- <span id="prMob"></span></p>
+        <p style="margin: 4px 0 0 0;">Customer Name:- <span id="prName" style="font-weight: 900;"></span></p>
+        <p style="margin: 2px 0 0 0;">Address: <span id="prAddr"></span></p>
+        <p style="margin: 2px 0 0 0;">City: <span id="prCity"></span></p>
+        <p style="margin: 4px 0 0 0; font-weight: 900;">Contact: <span id="prMob"></span></p>
     </div>
-    <div style="border-top: 1px dashed #000; padding-top: 8px; margin-bottom: 10px; font-size: 9pt;">
-        <p style="margin: 0; font-weight: 900;">FROM: LENSKART PALI</p>
-        <p style="margin: 0;">Shop No 3 & 4, Ahinsa Complex, Pali</p>
-        <p style="margin: 0;">📞 8290776551</p>
-    </div>
-    <div style="text-align: center; border-top: 2px solid #000; padding-top: 10px;">
+    <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px;">
         <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 6px;"></div>
         <p style="margin: 0; font-weight: 900; font-size: 12pt;">ID: <span id="prId"></span></p>
     </div>
 </div>
 
 <script>
-    // ✅ PRODUCTION EXEC URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNWlJJBlKGzjIpkj49a7NK0O0umYK5gnRGiNFfMJgW15FFXWwvIMpBMo43E3On7bhptQ/exec";
     let allOrders = [];
 
@@ -175,42 +181,48 @@
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
             const result = await res.json();
-            if (result.status === "success") { 
-                allOrders = result.orders; 
-                renderTable(); 
-            }
-        } catch (e) { console.error("Sync Error"); }
+            if (result.status === "success") { allOrders = result.orders; renderTable(); }
+        } catch (e) { alert("Fetch Error"); }
     }
 
     function renderTable() {
         const tbody = document.getElementById('masterTableBody');
         const q = document.getElementById('searchBox').value.toUpperCase().trim();
+        const f = document.getElementById('statusFilter').value;
         
-        const filtered = allOrders.filter(o => o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q)).reverse();
+        const filtered = allOrders.filter(o => 
+            (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q) || o[2].includes(q)) &&
+            (f === "" || o[4] === f)
+        ).reverse();
 
-        // Update Stats
+        // Analytical Calculations
+        let breachCount = 0;
+        const now = new Date();
+
         document.getElementById('stat-total').innerText = allOrders.length;
         document.getElementById('stat-created').innerText = allOrders.filter(o => o[4] === 'Created').length;
         document.getElementById('stat-dispatch').innerText = allOrders.filter(o => o[4] === 'Dispatch').length;
-        document.getElementById('stat-delivered').innerText = allOrders.filter(o => o[4] === 'Delivered').length;
 
-        tbody.innerHTML = filtered.map(o => `
-            <tr class="hover:bg-blue-50/30 transition-colors">
-                <td class="px-6 py-5">
-                    <p class="text-xs font-black text-blue-600 font-mono">${o[0]}</p>
-                    <p class="text-[11px] font-bold text-slate-800 uppercase mt-1">${o[1]}</p>
-                    <p class="text-[9px] font-bold text-slate-400 mt-0.5">${o[3] ? new Date(o[3]).toLocaleDateString() : 'N/A'}</p>
+        tbody.innerHTML = filtered.map(o => {
+            const orderDate = new Date(o[3]);
+            const diffDays = Math.floor((now - orderDate) / (1000 * 60 * 60 * 24));
+            const isBreach = (o[4] === 'Created' || o[4] === 'Received') && diffDays >= 3;
+            if(isBreach) breachCount++;
+
+            return `
+            <tr>
+                <td class="font-bold text-slate-500 text-[11px]">${orderDate.toLocaleDateString('en-IN')}</td>
+                <td class="font-black text-blue-700">${o[0]}</td>
+                <td class="uppercase font-bold">${o[1]}</td>
+                <td class="text-slate-600">${o[7] || 'Pali'}</td>
+                <td><span class="badge badge-${o[4]}">${o[4]}</span> ${isBreach ? '<span class="badge badge-TAT-BREACH">DELAY</span>' : ''}</td>
+                <td class="text-center">
+                    <button onclick="viewOrder('${o[0]}')" class="text-blue-600 font-black hover:bg-blue-600 hover:text-white px-3 py-1 rounded transition border border-blue-600 text-[10px]">ANALYSE</button>
                 </td>
-                <td class="px-6 py-5">
-                    <span class="status-badge ${o[4]}">${o[4]}</span>
-                </td>
-                <td class="px-6 py-5 text-center">
-                    <button onclick="viewOrder('${o[0]}')" class="bg-slate-100 hover:bg-blue-600 hover:text-white text-blue-600 w-10 h-10 rounded-2xl transition-all shadow-sm">
-                        <i class="fa-solid fa-eye text-sm"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
+
+        document.getElementById('stat-breach').innerText = breachCount;
     }
 
     async function viewOrder(id) {
@@ -222,16 +234,18 @@
 
             document.getElementById('v_id').innerText = d[0];
             document.getElementById('v_name').innerText = d[1];
-            document.getElementById('v_addr').innerText = d[2];
+            document.getElementById('v_mob').innerText = "📞 " + d[3];
+            document.getElementById('v_addr').innerText = d[2] + ", " + d[6] + ", " + d[7] + " - " + d[5];
+            document.getElementById('v_date_full').innerText = "Logged: " + new Date(d[10]).toLocaleString();
             
             setupLink('v_link_label', t ? t[6] : "");
             setupLink('v_link_parcel1', t ? t[7] : "");
             setupLink('v_link_parcel2', t ? t[8] : "");
             document.getElementById('parcelPhotosContainer').classList.toggle('hidden', !t);
             
-            document.getElementById('modalPrintBtn').onclick = () => { triggerPrint(id, d); };
+            document.getElementById('modalPrintBtn').onclick = () => triggerPrint(id, d);
             document.getElementById('viewModal').classList.replace('hidden', 'flex');
-        } catch (e) { alert("Error loading order."); }
+        } catch (e) { alert("Drill-down failed."); }
     }
 
     function setupLink(id, url) {
@@ -245,20 +259,30 @@
         document.getElementById('prName').innerText = d[1];
         document.getElementById('prAddr').innerText = d[2];
         document.getElementById('prCity').innerText = d[7] || "";
-        document.getElementById('prPin').innerText = d[5] || "";
         document.getElementById('prMob').innerText = d[3] || "";
-        
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: orderId, width: 100, height: 100 });
         setTimeout(() => window.print(), 800);
     }
 
     async function generateEOD() {
-        if (!confirm("Send Report to rkhorwall@outlook.com?")) return;
+        if (!confirm("Send Analytics to rkhorwall@outlook.com?")) return;
         try {
             await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) });
-            alert("✅ Sent!");
+            alert("Analysis Sent!");
         } catch (e) { alert("Failed."); }
+    }
+
+    function exportToCSV() {
+        let csv = "Date,Order ID,Customer,Mobile,Status\n";
+        allOrders.forEach(o => {
+            csv += `${new Date(o[3]).toLocaleDateString()},${o[0]},${o[1]},${o[2]},${o[4]}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `pali_logistics_${new Date().toLocaleDateString()}.csv`;
+        a.click();
     }
 
     function closeModals() { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
