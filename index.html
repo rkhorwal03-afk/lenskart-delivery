@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* ── PRINT: 58mm Thermal Slip ──────────────────────────── */
+        /* ── PRINT: 58mm Thermal Slip Optimization ── */
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
@@ -26,7 +26,7 @@
                 line-height: 1.4 !important;
             }
             #qrcode canvas { display: none !important; }
-            #qrcode img   { display: block !important; margin: 0 auto; width: 90px; height: 90px; }
+            #qrcode img   { display: block !important; margin: 0 auto; width: 95px; height: 90px; }
             @page { margin: 0; size: 58mm auto; }
         }
         .modal-blur { backdrop-filter: blur(8px); background: rgba(15,23,42,0.65); }
@@ -39,10 +39,10 @@
 
 <nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-700">
     <div class="max-w-xl mx-auto px-4 flex justify-between items-center h-14">
-        <span class="font-black uppercase tracking-widest text-xs text-blue-400">Lenskart · Pali</span>
+        <span class="font-black uppercase tracking-widest text-xs text-blue-400">Lenskart · Pali Store</span>
         <div class="flex gap-1">
-            <button onclick="toggleView('form')"   id="nav-store"   class="px-3 py-1.5 text-[10px] font-black uppercase bg-blue-600 rounded-lg">New Entry</button>
-            <button onclick="toggleView('search')" id="nav-reprint" class="px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg">Reprint</button>
+            <button onclick="toggleView('form')"   id="nav-store"   class="px-3 py-1.5 text-[10px] font-black uppercase bg-blue-600 rounded-lg transition-all">New Entry</button>
+            <button onclick="toggleView('search')" id="nav-reprint" class="px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg transition-all">Reprint</button>
             <a href="rider.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-40">Rider</a>
             <a href="admin.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-40">Admin</a>
         </div>
@@ -50,50 +50,49 @@
 </nav>
 
 <main class="max-w-xl mx-auto p-4 space-y-6 pb-20">
-    <div id="orderFormSection" class="space-y-4">
+
+    <div id="orderFormSection" class="space-y-4 animate-in fade-in duration-300">
         <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 p-6">
-            <h2 class="text-xs font-black uppercase text-slate-400 mb-5 tracking-widest">New Home Delivery Order</h2>
-            <form id="orderForm" class="space-y-4" novalidate>
+            <h2 class="text-xs font-black uppercase text-slate-400 mb-5 tracking-widest">Customer Delivery Details</h2>
+            <form id="orderForm" class="space-y-4">
+
                 <div>
                     <label class="text-[9px] font-black text-blue-600 uppercase tracking-widest">Order ID</label>
-                    <input type="text" id="manualId" required placeholder="e.g. ORD-2501"
+                    <input type="text" id="manualId" required placeholder="Type Manual ID..."
                         class="w-full border-2 border-slate-200 p-3.5 rounded-2xl font-black uppercase outline-none focus:border-blue-500 mt-1 text-sm transition">
                 </div>
+
                 <input type="text" id="custName" required placeholder="Customer Full Name"
                     class="w-full border-2 border-slate-200 p-3.5 rounded-2xl outline-none font-bold uppercase text-sm focus:border-blue-500 transition">
-                <textarea id="address" required placeholder="Full Street / House / Flat Address"
+
+                <textarea id="address" required placeholder="Shipping Street Address"
                     class="w-full border-2 border-slate-200 p-3.5 rounded-2xl outline-none font-bold text-sm focus:border-blue-500 transition" rows="2"></textarea>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="flex items-center border-2 border-slate-200 rounded-2xl focus-within:border-blue-500 bg-white overflow-hidden transition">
+                        <span class="pl-3 pr-1.5 font-black text-slate-400 text-xs bg-slate-50 py-3.5">+91</span>
+                        <input type="tel" id="mobile" required pattern="[0-9]{10}" maxlength="10" placeholder="Contact No"
+                            class="w-full p-3.5 pl-1 bg-transparent outline-none font-bold text-sm">
+                    </div>
+                    <div class="flex items-center border-2 border-slate-200 rounded-2xl focus-within:border-blue-500 bg-white overflow-hidden transition">
+                        <span class="pl-3 pr-1.5 font-black text-slate-400 text-xs bg-slate-50 py-3.5">+91</span>
+                        <input type="tel" id="altMobile" pattern="[0-9]{10}" maxlength="10" placeholder="Alt No"
+                            class="w-full p-3.5 pl-1 bg-transparent outline-none font-bold text-sm">
+                    </div>
+                </div>
+
                 <input type="text" id="landmark" placeholder="Landmark (Optional)"
                     class="w-full border-2 border-slate-200 p-3.5 rounded-2xl outline-none font-bold text-sm focus:border-blue-500 transition">
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Primary Mobile</label>
-                        <div class="flex items-center border-2 border-slate-200 rounded-2xl focus-within:border-blue-500 bg-white mt-1 overflow-hidden transition">
-                            <span class="pl-3 pr-1.5 font-black text-slate-400 text-xs bg-slate-50 py-3.5">+91</span>
-                            <input type="tel" id="mobile" required pattern="[0-9]{10}" maxlength="10" placeholder="10 digits"
-                                class="w-full p-3.5 pl-1 bg-transparent outline-none font-bold text-sm">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Alt Mobile</label>
-                        <div class="flex items-center border-2 border-slate-200 rounded-2xl focus-within:border-blue-500 bg-white mt-1 overflow-hidden transition">
-                            <span class="pl-3 pr-1.5 font-black text-slate-400 text-xs bg-slate-50 py-3.5">+91</span>
-                            <input type="tel" id="altMobile" pattern="[0-9]{10}" maxlength="10" placeholder="Optional"
-                                class="w-full p-3.5 pl-1 bg-transparent outline-none font-bold text-sm">
-                        </div>
-                    </div>
-                </div>
-
                 <div class="p-4 bg-blue-50 rounded-2xl space-y-3 border border-blue-100">
                     <div class="relative">
-                        <input type="number" id="pincode" required placeholder="Enter 6-Digit Pincode"
+                        <input type="number" id="pincode" required placeholder="Pincode"
                             oninput="handlePincode(this.value)"
                             class="w-full border-2 border-blue-200 p-3.5 rounded-xl font-black outline-none bg-white focus:border-blue-600 text-sm transition">
-                        <span id="pinLoader" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-blue-400 text-xs font-black animate-pulse">FETCHING...</span>
+                        <span id="pinLoader" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-blue-400 text-[10px] font-black animate-pulse">FETCHING...</span>
                     </div>
                     <select id="postOffice" class="w-full border-2 border-blue-200 p-3.5 rounded-xl bg-white outline-none font-bold text-sm focus:border-blue-500 transition">
-                        <option value="">— Select Post Office —</option>
+                        <option value="">— Select Area / PO —</option>
                     </select>
                     <div class="grid grid-cols-2 gap-3">
                         <input type="text" id="city"  readonly placeholder="City"
@@ -104,34 +103,32 @@
                 </div>
 
                 <button type="submit" class="w-full bg-slate-900 hover:bg-slate-700 text-white font-black py-4 rounded-2xl uppercase text-xs shadow-lg tracking-widest transition">
-                    Review & Save →
+                    Review & Save Order →
                 </button>
             </form>
         </div>
     </div>
 
-    <div id="searchSection" class="hidden space-y-4">
+    <div id="searchSection" class="hidden space-y-4 animate-in slide-in-from-bottom duration-300">
         <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200">
-            <h2 class="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Find & Reprint Order</h2>
+            <h2 class="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Reprint Delivery Slip</h2>
             <div class="flex gap-2">
                 <input type="text" id="searchInput" placeholder="Enter Order ID..."
-                    class="flex-1 bg-slate-100 p-4 rounded-2xl outline-none font-black text-blue-600 uppercase border-2 border-transparent focus:border-blue-500 text-sm transition"
-                    onkeydown="if(event.key==='Enter') searchOrder()">
-                <button onclick="searchOrder()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-2xl font-black text-xs uppercase transition">
+                    class="flex-1 bg-slate-100 p-4 rounded-2xl outline-none font-black text-blue-600 uppercase border-2 border-transparent focus:border-blue-500 text-sm transition">
+                <button onclick="searchOrder()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-2xl font-black text-xs transition">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
             </div>
 
-            <div id="searchResult" class="hidden mt-5 space-y-4 animate-in slide-in-from-top duration-200">
+            <div id="searchResult" class="hidden mt-5 space-y-4">
                 <div class="p-5 bg-slate-900 text-white rounded-[1.5rem] shadow-2xl">
                     <p id="resId"       class="text-base font-black font-mono text-blue-400"></p>
                     <p id="resName"     class="font-black uppercase mt-1 text-sm"></p>
                     <p id="resMob"      class="text-xs font-bold text-green-400 mt-0.5"></p>
                     <p id="resAddr"     class="text-[10px] mt-2 opacity-60 leading-tight"></p>
-                    <p id="resLocation" class="text-[10px] font-bold text-blue-300 mt-1"></p>
                 </div>
                 <button id="reprintBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl uppercase text-xs shadow-xl tracking-widest transition">
-                    <i class="fa-solid fa-print mr-2"></i>Print Delivery Slip
+                    <i class="fa-solid fa-print mr-2"></i>Reprint Slip Now
                 </button>
             </div>
         </div>
@@ -141,18 +138,18 @@
 <div id="confirmModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 modal-blur">
     <div class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden">
         <div class="p-5 bg-slate-50 border-b text-center">
-            <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Confirm Order Details</h3>
+            <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Verify Order Data</h3>
         </div>
         <div id="confirmContent" class="p-6 space-y-1.5 text-sm font-bold"></div>
         <div class="p-5 space-y-2.5">
-            <button onclick="finalSync(true)"  class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-2 tracking-widest transition">
+            <button onclick="finalSync(true)"  class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-2 transition">
                 <i class="fa-solid fa-print"></i> Save & Print Slip
             </button>
-            <button onclick="finalSync(false)" class="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 tracking-widest transition">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Save Only (No Print)
+            <button onclick="finalSync(false)" class="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Save Only
             </button>
             <button onclick="closeConfirm()"   class="w-full py-3.5 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-2xl font-black text-[10px] uppercase transition">
-                <i class="fa-solid fa-pen mr-1"></i> Edit Details
+                Edit Details
             </button>
         </div>
     </div>
@@ -160,55 +157,60 @@
 
 <div id="successPopup" class="fixed inset-0 z-[600] hidden items-center justify-center p-4 modal-blur">
     <div class="bg-white w-full max-w-xs rounded-[2rem] p-8 shadow-2xl text-center">
-        <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fa-solid fa-check text-2xl"></i>
-        </div>
-        <h3 class="text-base font-black uppercase">Saved!</h3>
-        <p id="successOrderId" class="text-blue-600 font-black mt-1 text-sm"></p>
-        <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Cloud Sync Complete</p>
-        <button onclick="location.reload()" class="w-full mt-5 bg-slate-900 text-white font-black py-3.5 rounded-2xl uppercase text-[10px] tracking-widest">New Order</button>
+        <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-check text-2xl"></i></div>
+        <h3 class="text-base font-black uppercase">Order Saved</h3>
+        <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Cloud Sync Successful</p>
+        <button onclick="location.reload()" class="w-full mt-5 bg-slate-900 text-white font-black py-3.5 rounded-2xl uppercase text-[10px] tracking-widest transition">New Entry</button>
     </div>
 </div>
 
 <div id="globalLoader" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur">
     <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4">
         <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-        <p class="text-[10px] font-black uppercase tracking-widest">Please wait...</p>
+        <p class="text-[10px] font-black uppercase tracking-widest">Syncing with Google Cloud...</p>
     </div>
 </div>
 
-<div id="printArea">
+<div id="printArea" style="width: 54mm; margin: 0 auto; color: #000; background: #fff;">
     
-    <div style="text-align:center; padding-bottom:5px; margin-bottom:10px;">
-        <h1 style="margin:0; font-size:18px; font-weight:bold; text-decoration: underline;">DELIVERY SLIP</h1>
+    <div style="text-align: center; border-bottom: 2.5px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
+        <p style="margin: 0; font-size: 10pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">LENSKART</p>
+        <h1 style="margin: 0; font-size: 16pt; font-weight: 900; line-height: 1.1; text-decoration: underline;">DELIVERY SLIP</h1>
     </div>
 
-    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4;">
-        <p style="margin:0; font-weight:bold;">To,</p>
-        <p style="margin:2px 0 0 0;">Customer Name:- <span id="prName"></span></p>
-        <p style="margin:2px 0 0 0;">Shipping Address:- <span id="prAddr"></span></p>
-        <p style="margin:2px 0 0 0;">City:- <span id="prCity"></span></p>
-        <p style="margin:2px 0 0 0;">State:- <span id="prState"></span></p>
-        <p style="margin:2px 0 0 0;">Pincode:- <span id="prPin"></span></p>
-        <p style="margin:2px 0 0 0;" id="prLandmarkLine">Landmark:- <span id="prLandmark"></span></p>
-        <p style="margin:2px 0 0 0;">Contact number:- <span id="prMob"></span></p>
-        <p style="margin:2px 0 0 0;" id="prAltLine">Alt Number:- <span id="prAltMob"></span></p>
+    <div style="margin-bottom: 12px; font-size: 11pt; line-height: 1.4;">
+        <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 10pt;">TO,</p>
+        <p style="margin: 4px 0 0 0;"><b>Customer Name:-</b> <span id="prName" style="text-transform: uppercase;"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>Address:-</b> <span id="prAddr"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>City:-</b> <span id="prCity"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>State:-</b> <span id="prState"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>Pincode:-</b> <span id="prPin"></span></p>
+        <p style="margin: 2px 0 0 0;" id="prLandmarkLine"><b>Landmark:-</b> <span id="prLandmark"></span></p>
+        
+        <div style="margin-top: 6px; border-top: 1px dashed #000; padding-top: 4px;">
+            <p style="margin: 0;"><b>Contact:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
+            <p style="margin: 2px 0 0 0;" id="prAltLine"><b>Alt Number:-</b> <span id="prAltMob"></span></p>
+        </div>
     </div>
 
-    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4;">
-        <p style="margin:0; font-weight:bold;">From,</p>
-        <p style="margin:2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Rajasthan 306401</p>
-        <p style="margin:2px 0 0 0;">Contact number:- 8290776551</p>
+    <div style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 12px; font-size: 10pt; line-height: 1.3;">
+        <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 9pt;">FROM,</p>
+        <p style="margin: 4px 0 0 0; font-weight: 900; font-size: 11pt;">LENSKART PALI</p>
+        <p style="margin: 2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Raj. 306401</p>
+        <p style="margin: 4px 0 0 0;"><b>Contact:-</b> 8290776551</p>
     </div>
 
-    <div style="text-align:center;">
-        <div id="qrcode" style="display:flex; justify-content:center; margin: 0 auto 5px auto;"></div>
-        <p style="margin:5px 0 0 0; font-size:14px; font-weight:bold;">Order id:- <span id="prId"></span></p>
+    <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px;">
+        <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 6px;"></div>
+        <p style="margin: 0; font-weight: 900; font-size: 14pt; font-family: 'Courier New', Courier, monospace;">
+            Order id:- <span id="prId"></span>
+        </p>
     </div>
 
 </div>
 
 <script>
+    // ✅ FINAL SCRIPT URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
 
     let tempPayload = null;
@@ -216,16 +218,12 @@
     function toggleView(v) {
         document.getElementById('orderFormSection').classList.toggle('hidden', v !== 'form');
         document.getElementById('searchSection').classList.toggle('hidden',    v !== 'search');
-        document.getElementById('nav-store').className   = v === 'form'
-            ? 'px-3 py-1.5 text-[10px] font-black uppercase bg-blue-600 rounded-lg'
-            : 'px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg';
-        document.getElementById('nav-reprint').className = v === 'search'
-            ? 'px-3 py-1.5 text-[10px] font-black uppercase bg-blue-600 rounded-lg'
-            : 'px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg';
+        document.getElementById('nav-store').className   = v === 'form' ? 'px-3 py-1.5 text-[10px] font-black uppercase bg-blue-600 rounded-lg' : 'px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg';
+        document.getElementById('nav-reprint').className = v === 'search' ? 'px-3 py-1.5 text-[10px] font-black uppercase bg-blue-600 rounded-lg' : 'px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg';
     }
 
     let pinDebounce = null;
-    function handlePincode(pin) {
+    async function handlePincode(pin) {
         clearTimeout(pinDebounce);
         if (pin.length !== 6) return;
         pinDebounce = setTimeout(async () => {
@@ -235,60 +233,41 @@
                 const data = await res.json();
                 if (data[0].Status === "Success") {
                     const po = data[0].PostOffice;
-                    document.getElementById('postOffice').innerHTML =
-                        `<option value="">— Select Post Office —</option>` +
-                        po.map(p => `<option value="${p.Name}">${p.Name}</option>`).join('');
+                    document.getElementById('postOffice').innerHTML = po.map(p => `<option value="${p.Name}">${p.Name}</option>`).join('');
                     document.getElementById('city').value  = po[0].District;
                     document.getElementById('state').value = po[0].State;
-                } else {
-                    document.getElementById('postOffice').innerHTML = `<option value="">— Invalid Pincode —</option>`;
-                    document.getElementById('city').value  = "";
-                    document.getElementById('state').value = "";
                 }
-            } catch (err) {
-                document.getElementById('postOffice').innerHTML = `<option value="">— Lookup Failed —</option>`;
-            }
+            } catch (err) { console.error("Pin lookup failed"); }
             document.getElementById('pinLoader').classList.add('hidden');
         }, 400);
     }
 
     document.getElementById('orderForm').onsubmit = (e) => {
         e.preventDefault();
-
         const mobile    = document.getElementById('mobile').value.trim();
         const altMobile = document.getElementById('altMobile').value.trim();
-        const orderId   = document.getElementById('manualId').value.toUpperCase().trim();
-        const postOffice = document.getElementById('postOffice').value;
-
-        if (!orderId)           { alert("Please enter an Order ID."); return; }
-        if (mobile.length !== 10) { alert("Mobile number must be 10 digits."); return; }
-        if (!postOffice)          { alert("Please select a Post Office."); return; }
 
         tempPayload = {
             action:     "addOrder",
-            orderId:    orderId,
+            orderId:    document.getElementById('manualId').value.toUpperCase().trim(),
             name:       document.getElementById('custName').value.trim(),
             mobile:     "+91 " + mobile,
             altMobile:  altMobile ? ("+91 " + altMobile) : "N/A",
             landmark:   document.getElementById('landmark').value.trim() || "N/A",
             pincode:    document.getElementById('pincode').value,
-            postOffice: postOffice,
+            postOffice: document.getElementById('postOffice').value,
             city:       document.getElementById('city').value  || "N/A",
             state:      document.getElementById('state').value || "N/A",
             address:    document.getElementById('address').value.trim()
         };
 
         document.getElementById('confirmContent').innerHTML = `
-            <div class="space-y-2 text-sm">
-                <p class="text-blue-600 font-black text-base">${escHtml(tempPayload.orderId)}</p>
-                <p><span class="text-slate-400 text-[10px] uppercase">Name</span><br>${escHtml(tempPayload.name)}</p>
-                <p><span class="text-slate-400 text-[10px] uppercase">Mobile</span><br>${escHtml(tempPayload.mobile)}
-                   ${altMobile ? ` · Alt: ${escHtml(tempPayload.altMobile)}` : ''}</p>
-                <p><span class="text-slate-400 text-[10px] uppercase">Address</span><br>
-                   ${escHtml(tempPayload.address)}, ${escHtml(postOffice)}<br>
-                   <span class="text-blue-600">${escHtml(tempPayload.city)}, ${escHtml(tempPayload.state)} — ${escHtml(tempPayload.pincode)}</span>
-                </p>
-                ${tempPayload.landmark !== 'N/A' ? `<p><span class="text-slate-400 text-[10px] uppercase">Landmark</span><br>${escHtml(tempPayload.landmark)}</p>` : ''}
+            <div class="space-y-1">
+                <p class="text-blue-600 font-black">ID: ${tempPayload.orderId}</p>
+                <p>NAME: ${tempPayload.name.toUpperCase()}</p>
+                <p>MOB: ${tempPayload.mobile}</p>
+                <p class="text-[10px] opacity-60 leading-tight">${tempPayload.address.toUpperCase()}</p>
+                <p class="text-[10px] text-blue-600">${tempPayload.city}, ${tempPayload.state} — ${tempPayload.pincode}</p>
             </div>
         `;
         document.getElementById('confirmModal').classList.replace('hidden', 'flex');
@@ -298,103 +277,69 @@
         closeConfirm();
         showLoading();
         try {
+            // Send payload to v13.2 backend
             const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(tempPayload) });
             const result = await res.json();
 
             if (result.status === "success") {
                 hideLoading();
-                if (shouldPrint) triggerPrint(tempPayload.orderId, tempPayload, null);
-                document.getElementById('successOrderId').innerText = tempPayload.orderId;
+                if (shouldPrint) triggerPrint(tempPayload.orderId, tempPayload);
                 document.getElementById('successPopup').classList.replace('hidden', 'flex');
-            } else if (result.message && result.message.includes("Duplicate")) {
-                hideLoading();
-                alert("⛔ DUPLICATE ORDER ID!\n\nID [" + tempPayload.orderId + "] already exists.\nPlease use a unique ID.");
             } else {
                 hideLoading();
-                alert("Backend Error: " + (result.message || "Unknown error."));
+                alert("Error: " + result.message);
             }
-        } catch (err) {
-            hideLoading();
-            alert("Connection Error: " + err.message);
-        }
+        } catch (err) { hideLoading(); alert("Connection Error: Check internet."); }
     }
 
     async function searchOrder() {
         const id = document.getElementById('searchInput').value.toUpperCase().trim();
-        if (!id) { alert("Please enter an Order ID."); return; }
+        if(!id) return;
         showLoading();
         try {
-            const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
             const result = await res.json();
-            if (result.status === "success" && result.data.order) {
+            if(result.status === "success" && result.data.order) {
                 const d = result.data.order;
-                const t = result.data.track;
-                document.getElementById('resId').innerText       = d[0];
-                document.getElementById('resName').innerText     = d[1];
-                document.getElementById('resMob').innerText      = d[3];
-                document.getElementById('resAddr').innerText     = d[2];
-                document.getElementById('resLocation').innerText = `${d[6]}, ${d[7]}, ${d[8]} — ${d[5]}`;
+                document.getElementById('resId').innerText   = id;
+                document.getElementById('resName').innerText = d[1];
+                document.getElementById('resMob').innerText  = d[3];
+                document.getElementById('resAddr').innerText = d[2];
                 document.getElementById('searchResult').classList.remove('hidden');
-
-                document.getElementById('reprintBtn').onclick = () => {
-                    triggerPrint(d[0], {
-                        name:       d[1], address: d[2], postOffice: d[6],
-                        city:       d[7], state:   d[8], pincode:   d[5],
-                        landmark:   d[9], mobile:  d[3], altMobile: d[4]
-                    }, t);
-                };
-            } else {
-                alert("Order ID not found in database.");
-                document.getElementById('searchResult').classList.add('hidden');
-            }
-        } catch (err) {
-            alert("Search Error: " + err.message);
-        }
+                document.getElementById('reprintBtn').onclick = () => triggerPrint(id, { name: d[1], address: d[2], city: d[7], state: d[8], pincode: d[5], landmark: d[9], mobile: d[3], altMobile: d[4] });
+            } else { alert("Order ID Not Found."); }
+        } catch (e) { alert("Search Error."); }
         hideLoading();
     }
 
-    function triggerPrint(orderId, data, track) {
+    // ✅ PRINT LOGIC MAPPED TO BEAUTIFIED TEMPLATE
+    function triggerPrint(orderId, data) {
         setText('prId', orderId);
-        setText('prName', data.name || "");
+        setText('prName', data.name);
+        setText('prAddr', data.address);
+        setText('prCity', data.city);
+        setText('prState', data.state);
+        setText('prPin', data.pincode);
+        setText('prMob', data.mobile);
         
-        const po = data.postOffice || data.po || "";
-        setText('prAddr', data.address + (po ? ", " + po : ""));
-        
-        setText('prCity', data.city || "");
-        setText('prState', data.state || "");
-        setText('prPin', data.pincode || data.pin || "");
-
-        const lm = data.landmark || data.lm || "";
+        const lm = data.landmark;
         if (lm && lm !== "N/A") {
             setText('prLandmark', lm);
             document.getElementById('prLandmarkLine').style.display = 'block';
-        } else {
-            document.getElementById('prLandmarkLine').style.display = 'none';
-        }
+        } else { document.getElementById('prLandmarkLine').style.display = 'none'; }
 
-        setText('prMob', data.mobile || data.mob || "");
-
-        const alt = data.altMobile || data.altMob || "";
+        const alt = data.altMobile;
         if (alt && alt !== "N/A") {
             setText('prAltMob', alt);
             document.getElementById('prAltLine').style.display = 'block';
-        } else {
-            document.getElementById('prAltLine').style.display = 'none';
-        }
+        } else { document.getElementById('prAltLine').style.display = 'none'; }
 
         document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), {
-            text: orderId,
-            width: 100,
-            height: 100,
-            correctLevel: QRCode.CorrectLevel.H
-        });
-
+        new QRCode(document.getElementById("qrcode"), { text: orderId, width: 95, height: 95 });
         setTimeout(() => window.print(), 800);
     }
 
     function setText(id, val) { document.getElementById(id).innerText = val || ""; }
-    function escHtml(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
     function showLoading() { document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
     function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
     function closeConfirm() { document.getElementById('confirmModal').classList.replace('flex', 'hidden'); }
