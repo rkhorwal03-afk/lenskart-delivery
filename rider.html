@@ -29,7 +29,7 @@
     </div>
 </nav>
 
-<main class="max-w-xl mx-auto p-4 space-y-6">
+<main class="max-w-xl mx-auto p-4 space-y-6 pb-20">
     
     <div id="scanSection" class="space-y-6">
         <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 p-8 space-y-6">
@@ -110,10 +110,10 @@
 </div>
 
 <script>
-    // ✅ YOUR SCRIPT URL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec"; 
+    // ✅ PRODUCTION EXECUTION URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNWlJJBlKGzjIpkj49a7NK0O0umYK5gnRGiNFfMJgW15FFXWwvIMpBMo43E3On7bhptQ/exec"; 
     
-    let labelData = "", parcelData1 = "", parcelData2 = "";
+    let labelData = "", p1Data = "", p2Data = "";
     let scanner = null;
 
     function toggleRiderView(v) {
@@ -124,7 +124,6 @@
         if(v === 'history') loadHistory();
     }
 
-    // 🚀 IMPROVED SCANNER LOGIC
     async function startQRScanner() {
         const qrBox = document.getElementById('qr-reader');
         qrBox.classList.remove('hidden');
@@ -147,7 +146,6 @@
         document.getElementById('scanBtn').onclick = startQRScanner;
     }
 
-    // 🚀 FETCH DATA LOGIC
     async function verifyOrderId() {
         const id = document.getElementById('orderIdSearch').value.trim();
         const resEl = document.getElementById('verifyResult');
@@ -197,12 +195,12 @@
                     runOCR(base64);
                 } 
                 else if (type === 'parcel1') { 
-                    parcelData1 = base64; 
+                    p1Data = base64; 
                     document.getElementById('prev-parcel1').src = base64; 
                     document.getElementById('prev-parcel1').classList.remove('hidden'); 
                 }
                 else if (type === 'parcel2') { 
-                    parcelData2 = base64; 
+                    p2Data = base64; 
                     document.getElementById('prev-parcel2').src = base64; 
                     document.getElementById('prev-parcel2').classList.remove('hidden'); 
                 }
@@ -236,8 +234,8 @@
             riderName: "PALI_RIDER", 
             pickupDate: new Date().toLocaleDateString(), 
             trackingImg: labelData, 
-            parcelImg1: parcelData1, 
-            parcelImg2: parcelData2 
+            parcelImg1: p1Data, 
+            parcelImg2: p2Data 
         };
 
         try {
