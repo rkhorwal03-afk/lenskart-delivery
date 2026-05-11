@@ -13,10 +13,13 @@
         .data-table { width: 100%; border-collapse: collapse; background: #fff; }
         .data-table th { background: #1e293b; color: #fff; font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 12px; border: 1px solid #334155; position: sticky; top: 0; }
         .data-table td { padding: 10px; font-size: 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
-        .data-table tr:hover { background-color: #f1f5f9 !important; }
+        .data-table tr:nth-child(even) { background-color: #f1f5f9; }
+        .data-table tr:hover { background-color: #e2e8f0 !important; }
 
         .badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: 900; border-radius: 4px; text-transform: uppercase; border: 1px solid transparent; }
         .badge-Created   { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+        .badge-Received  { background: #fef9c3; color: #854d0e; border-color: #fde047; }
+        .badge-Packed    { background: #f3e8ff; color: #6b21a8; border-color: #d8b4fe; }
         .badge-Dispatch  { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
         .badge-Delivered { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
         .badge-BREACH    { background: #ffe4e6; color: #991b1b; border-color: #fecade; animation: blink 1.5s infinite; }
@@ -26,7 +29,15 @@
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
-            #printArea { display: block !important; width: 54mm; color: #000; background: #fff; padding: 1mm; font-family: Arial, sans-serif !important; line-height: 1.3; }
+            #printArea { 
+                display: block !important; 
+                width: 54mm; 
+                color: #000; 
+                background: #fff; 
+                padding: 1mm; 
+                font-family: Arial, sans-serif !important;
+                line-height: 1.3;
+            }
             #qrcode canvas { display: none !important; }
             #qrcode img { display: block !important; margin: 0 auto; width: 95px; height: 95px; }
             @page { margin: 0; size: 58mm auto; }
@@ -37,15 +48,33 @@
 
 <nav class="bg-slate-900 text-white px-4 py-3 border-b-4 border-blue-600 sticky top-0 z-[100]">
     <div class="max-w-[1600px] mx-auto flex justify-between items-center">
-        <span class="font-black text-xl tracking-tighter">DATA COMMAND</span>
-        <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-[10px] font-black uppercase shadow-lg transition">Refresh DB</button>
+        <div class="flex items-center gap-3">
+            <span class="font-black text-xl tracking-tighter">DATA COMMAND</span>
+            <span class="text-[9px] bg-blue-600 px-2 py-0.5 rounded font-black uppercase">Lenskart Pali</span>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="generateEOD()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-[10px] font-black uppercase transition">EOD Summary</button>
+            <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-[10px] font-black uppercase shadow-lg transition">Refresh DB</button>
+        </div>
     </div>
 </nav>
 
 <div class="max-w-[1600px] mx-auto p-4 space-y-4">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-white p-4 rounded border border-slate-200 shadow-sm"><p class="text-[9px] font-black text-slate-400 uppercase">Total Load</p><h3 id="stat-total" class="text-2xl font-black">0</h3></div>
+        <div class="bg-white p-4 rounded border border-slate-200 shadow-sm"><p class="text-[9px] font-black text-blue-500 uppercase">New Orders</p><h3 id="stat-created" class="text-2xl font-black text-blue-600">0</h3></div>
+        <div class="bg-white p-4 rounded border border-slate-200 shadow-sm"><p class="text-[9px] font-black text-green-500 uppercase">In Transit</p><h3 id="stat-dispatch" class="text-2xl font-black text-green-600">0</h3></div>
+        <div class="bg-rose-50 p-4 rounded border border-rose-200 shadow-sm"><p class="text-[9px] font-black text-rose-600 uppercase">Breach Tab</p><h3 id="stat-breach" class="text-2xl font-black text-rose-600">0</h3></div>
+        <div class="hidden md:block bg-white p-4 rounded border border-slate-200 shadow-sm text-center">
+            <p class="text-[9px] font-black text-slate-400 uppercase">Status</p>
+            <p class="text-[10px] font-black text-green-600 mt-2"><i class="fa-solid fa-circle-check"></i> CLOUD ACTIVE</p>
+        </div>
+    </div>
+
     <div class="bg-slate-100 p-3 rounded-lg flex flex-wrap gap-3 items-center border border-slate-200">
         <div class="flex-1 min-w-[250px]"><input id="searchBox" oninput="renderTable()" type="text" placeholder="Search ID, Name, Mobile or Area..." class="w-full border border-slate-300 px-4 py-2 text-xs font-bold rounded outline-none shadow-sm"></div>
-        <button id="breachToggle" onclick="toggleBreachFilter()" class="bg-white border border-slate-300 text-slate-500 hover:bg-rose-600 hover:text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm transition"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Breach Tab</button>
+        <button id="breachToggle" onclick="toggleBreachFilter()" class="bg-white border border-slate-300 text-slate-500 hover:bg-rose-600 hover:text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm transition"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Filter Breach</button>
+        <select id="statusFilter" onchange="renderTable()" class="bg-white border border-slate-300 px-3 py-2 text-xs font-bold rounded outline-none shadow-sm"><option value="">All Statuses</option><option value="Created">Created</option><option value="Dispatch">Dispatch</option><option value="Delivered">Delivered</option></select>
     </div>
 
     <div class="bg-white border border-slate-200 rounded shadow-xl overflow-hidden">
@@ -59,38 +88,48 @@
 </div>
 
 <div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden p-6 space-y-5">
-        <div class="flex justify-between items-center"><h3 id="v_id" class="text-lg font-black text-blue-600 font-mono"></h3><button onclick="closeModals()"><i class="fa-solid fa-circle-xmark text-2xl text-slate-300"></i></button></div>
-        
-        <div id="viewContainer" class="space-y-4">
-            <div class="bg-slate-50 p-4 border rounded-lg">
-                <p id="v_name" class="font-black uppercase text-slate-800 text-lg"></p>
-                <p id="v_mob" class="text-xs font-bold text-blue-600"></p>
-                <p id="v_addr" class="text-[11px] text-slate-500 mt-1 leading-tight"></p>
-                <button onclick="toggleEdit(true)" class="mt-3 text-[9px] font-black text-blue-600 uppercase border border-blue-200 px-3 py-1 rounded bg-white hover:bg-blue-50 transition">Modify Info</button>
-            </div>
-            
-            <div class="p-4 bg-slate-900 rounded-xl flex items-center justify-between gap-3">
-                <select id="updateStatusVal" class="flex-1 bg-slate-800 text-white text-xs font-bold p-2 rounded outline-none border border-slate-700"><option value="Created">Created</option><option value="Received">Received</option><option value="Packed">Packed</option><option value="Dispatch">Dispatch</option><option value="Delivered">Delivered</option></select>
-                <button onclick="commitStatusUpdate()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase shadow-lg">Update</button>
-            </div>
-            <button id="modalPrintBtn" class="w-full bg-slate-100 border border-slate-200 font-black py-4 rounded uppercase text-xs">Print Slip</button>
+    <div class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden">
+        <div class="p-5 bg-slate-50 border-b flex justify-between items-center">
+            <h3 id="v_id" class="text-lg font-black text-blue-600 font-mono"></h3>
+            <button onclick="closeModals()" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
         </div>
+        <div class="p-6 space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-slate-50 p-4 border rounded-lg">
+                    <p class="text-[9px] font-black text-slate-400 uppercase">Customer Profile</p>
+                    <p id="v_name" class="font-black text-md uppercase text-slate-800 mt-1"></p>
+                    <p id="v_mob" class="text-xs font-bold text-blue-600"></p>
+                    <p id="v_addr" class="text-[11px] text-slate-500 mt-2 leading-tight"></p>
+                </div>
+                
+                <div id="parcelPhotosContainer" class="hidden bg-slate-50 p-4 border rounded-lg space-y-2">
+                    <p class="text-[9px] font-black text-slate-400 uppercase">Verification</p>
+                    <p class="text-[10px] font-black text-slate-900 border-b pb-1 mb-1">AWB: <span id="v_tracking_id" class="text-blue-700"></span></p>
+                    <a id="v_link_label" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline">Label File</a>
+                    <a id="v_link_parcel1" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline">Pic 1</a>
+                    <a id="v_link_parcel2" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline">Pic 2</a>
+                </div>
+            </div>
 
-        <div id="editContainer" class="hidden space-y-3">
-            <p class="text-[10px] font-black text-rose-600 uppercase">Editor Active</p>
-            <input type="text" id="e_name" placeholder="Name" class="w-full border p-3 rounded font-bold uppercase text-xs">
-            <textarea id="e_addr" placeholder="Address" class="w-full border p-3 rounded font-bold text-xs" rows="2"></textarea>
-            <div class="grid grid-cols-2 gap-2">
-                <input type="tel" id="e_mob" placeholder="Mobile" class="border p-3 rounded font-bold text-xs">
-                <input type="tel" id="e_alt" placeholder="Alt Mobile" class="border p-3 rounded font-bold text-xs">
+            <div class="p-4 bg-slate-900 rounded-xl flex items-center justify-between gap-3">
+                <div class="flex-1">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Modify Current Status</p>
+                    <select id="updateStatusVal" class="w-full bg-slate-800 text-white text-xs font-bold p-2 rounded outline-none border border-slate-700">
+                        <option value="Created">Created</option>
+                        <option value="Received">Received</option>
+                        <option value="Packed">Packed</option>
+                        <option value="Dispatch">Dispatch</option>
+                        <option value="Delivered">Delivered</option>
+                    </select>
+                </div>
+                <button onclick="commitStatusUpdate()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-lg font-black text-[10px] uppercase transition shadow-lg shadow-blue-500/20">
+                    Update Now
+                </button>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="e_city" placeholder="City" class="border p-3 rounded font-bold text-xs">
-                <input type="text" id="e_pin" placeholder="Pincode" class="border p-3 rounded font-bold text-xs">
-            </div>
-            <button onclick="saveEdits()" class="w-full bg-green-600 text-white font-black py-4 rounded uppercase text-xs shadow-lg">Save to Cloud</button>
-            <button onclick="toggleEdit(false)" class="w-full text-slate-400 font-bold text-[10px] uppercase">Cancel</button>
+
+            <button id="modalPrintBtn" class="w-full bg-slate-100 text-slate-900 border border-slate-200 font-black py-4 rounded uppercase text-xs hover:bg-white transition active:scale-95">
+                <i class="fa-solid fa-print mr-1"></i> Reprint Delivery Slip
+            </button>
         </div>
     </div>
 </div>
@@ -98,118 +137,150 @@
 <div id="globalLoader" class="fixed inset-0 z-[600] hidden items-center justify-center bg-slate-900/50">
     <div class="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 text-center border-t-4 border-blue-600">
         <div class="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-        <p id="loaderMsg" class="text-[11px] font-black uppercase text-slate-800">Processing...</p>
+        <div><p id="loaderMsg" class="text-[11px] font-black uppercase tracking-widest text-slate-800">Processing...</p><p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Please Wait</p></div>
     </div>
 </div>
 
 <div id="printArea">
-    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
-        <p style="margin: 0; font-size: 10pt; font-weight: 900; text-transform: uppercase;">LENSKART</p>
-        <h1 style="margin: 0; font-size: 16pt; font-weight: 900; line-height: 1.1; text-decoration: underline;">DELIVERY SLIP</h1>
+    <div style="text-align: center; border-bottom: 2.5px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
+        <p style="margin: 0; font-size: 10pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">LENSKART</p>
+        <h1 style="margin: 0; font-size: 15pt; font-weight: 900; text-decoration: underline;">DELIVERY SLIP</h1>
     </div>
-    <div style="margin-bottom: 12px; font-size: 11pt;">
-        <p style="margin: 0; font-weight: 900; text-decoration: underline;">TO,</p>
-        <p style="margin: 4px 0 0 0;">Customer Name:- <span id="prName" style="text-transform: uppercase; font-weight:900;"></span></p>
-        <p style="margin: 2px 0 0 0;">Address: <span id="prAddr"></span></p>
-        <p style="margin: 4px 0 0 0;">Contact: <span id="prMob" style="font-weight: 900;"></span></p>
+    <div style="margin-bottom: 12px; font-size: 11pt; line-height: 1.4;">
+        <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 10pt;">TO,</p>
+        <p style="margin: 4px 0 0 0;"><b>Customer Name:-</b> <span id="prName" style="text-transform: uppercase; font-weight:900;"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>Shipping Address:-</b> <span id="prAddr"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>City:-</b> <span id="prCity"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>State:-</b> <span id="prState"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>Pincode:-</b> <span id="prPin"></span></p>
+        <p style="margin: 2px 0 0 0;" id="prLandmarkLine"><b>Landmark:-</b> <span id="prLandmark"></span></p>
+        <div style="margin-top: 6px; border-top: 1px dashed #000; padding-top: 4px;">
+            <p style="margin: 0;"><b>Contact number:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
+            <p style="margin: 2px 0 0 0;" id="prAltLine"><b>Alt Number:-</b> <span id="prAltMob"></span></p>
+        </div>
+    </div>
+    <div style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 12px; font-size: 10pt; line-height: 1.3;">
+        <p style="margin: 0; font-weight: 900; text-decoration: underline;">FROM,</p>
+        <p style="margin: 4px 0 0 0; font-weight: 900;">LENSKART PALI</p>
+        <p style="margin: 0;">📞 8290776551</p>
     </div>
     <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px;">
         <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 6px;"></div>
-        <p style="margin: 0; font-weight: 900; font-size: 14pt;">Order id:- <span id="prId"></span></p>
+        <p style="margin: 0; font-weight: 900; font-size: 14pt; font-family: 'Courier New', Courier, monospace;">Order id:- <span id="prId"></span></p>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNWlJJBlKGzjIpkj49a7NK0O0umYK5gnRGiNFfMJgW15FFXWwvIMpBMo43E3On7bhptQ/exec";
-    let allOrders = [], showBreachOnly = false, currentId = "", currentData = null;
+    let allOrders = [];
+    let showBreachOnly = false;
+    let currentViewingId = "";
 
-    function showLoading(m) { document.getElementById('loaderMsg').innerText = m; document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
+    function showLoading(m = "Loading Data...") { document.getElementById('loaderMsg').innerText = m; document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
     function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
 
     async function refreshData() {
-        showLoading("Syncing...");
+        showLoading("Syncing Cloud Data...");
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
             const result = await res.json();
             if (result.status === "success") { allOrders = result.orders; renderTable(); }
-        } catch (e) { alert("Error"); }
+        } catch (e) { alert("Load Error"); }
         hideLoading();
+    }
+
+    function toggleBreachFilter() {
+        showBreachOnly = !showBreachOnly;
+        document.getElementById('breachToggle').className = showBreachOnly ? "bg-rose-600 text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-lg" : "bg-white border border-slate-300 text-slate-500 px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm";
+        renderTable();
     }
 
     function renderTable() {
         const tbody = document.getElementById('masterTableBody');
         const q = document.getElementById('searchBox').value.toUpperCase().trim();
+        const f = document.getElementById('statusFilter').value;
         const now = new Date();
+
+        let breachTotal = 0;
+        allOrders.forEach(o => {
+            const age = Math.floor((now - new Date(o[3])) / 864e5);
+            if ((o[4] === 'Created' || o[4] === 'Received' || o[4] === 'Packed') && age >= 3) breachTotal++;
+        });
+
+        document.getElementById('stat-total').innerText = allOrders.length;
+        document.getElementById('stat-created').innerText = allOrders.filter(o => o[4] === 'Created').length;
+        document.getElementById('stat-dispatch').innerText = allOrders.filter(o => o[4] === 'Dispatch').length;
+        document.getElementById('stat-breach').innerText = breachTotal;
+
         const filtered = allOrders.filter(o => {
             const age = Math.floor((now - new Date(o[3])) / 864e5);
-            const isB = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
-            return (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q)) && (showBreachOnly ? isB : true);
+            const isBreach = (o[4] === 'Created' || o[4] === 'Received' || o[4] === 'Packed') && age >= 3;
+            const matchesSearch = (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q) || o[2].includes(q) || o[7].toUpperCase().includes(q));
+            const matchesStatus = (f === "" || o[4] === f);
+            const matchesBreach = showBreachOnly ? isBreach : true;
+            return matchesSearch && matchesStatus && matchesBreach;
         }).reverse();
+
         tbody.innerHTML = filtered.map(o => {
             const age = Math.floor((now - new Date(o[3])) / 864e5);
-            const isB = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
-            return `<tr><td>${new Date(o[3]).toLocaleDateString('en-IN')}</td><td class="font-black text-blue-600">${o[0]}</td><td class="font-bold uppercase">${o[1]}</td><td class="text-blue-700">${o[2]}</td><td>${age} Days</td><td><span class="badge badge-${o[4]}">${o[4]}</span> ${isB ? '<span class="badge badge-BREACH">DELAY</span>' : ''}</td><td class="text-center"><button onclick="viewOrder('${o[0]}')" class="bg-slate-900 text-white px-3 py-1 rounded text-[9px] font-black uppercase transition active:scale-95">Analyse</button></td></tr>`;
+            const isBreach = (o[4] === 'Created' || o[4] === 'Received' || o[4] === 'Packed') && age >= 3;
+            return `<tr><td>${new Date(o[3]).toLocaleDateString('en-IN')}</td><td class="font-black text-blue-600">${o[0]}</td><td class="font-bold uppercase">${o[1]}</td><td class="text-blue-700">${o[2]}</td><td class="text-slate-500">${o[7]} / ${o[6]}</td><td class="${isBreach ? 'text-rose-600' : ''}">${age} Days</td><td><span class="badge badge-${o[4]}">${o[4]}</span> ${isBreach ? '<span class="badge badge-BREACH">DELAY</span>' : ''}</td><td class="text-center"><button onclick="viewOrder('${o[0]}')" class="bg-slate-900 text-white px-3 py-1 rounded text-[9px] font-black uppercase transition active:scale-95">Analyse</button></td></tr>`;
         }).join('');
     }
 
     async function viewOrder(id) {
-        showLoading(`Analysing ${id}`);
-        currentId = id;
+        showLoading(`Opening ID: ${id}`);
+        currentViewingId = id;
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
             const result = await res.json();
-            currentData = result.data.order;
-            document.getElementById('v_id').innerText = currentData[0];
-            document.getElementById('v_name').innerText = currentData[1];
-            document.getElementById('v_mob').innerText = currentData[3];
-            document.getElementById('v_addr').innerText = `${currentData[2]}, ${currentData[7]} - ${currentData[5]}`;
-            document.getElementById('updateStatusVal').value = currentData[11];
-            document.getElementById('modalPrintBtn').onclick = () => triggerPrint(id, currentData);
-            toggleEdit(false);
+            const d = result.data.order;
+            const t = result.data.track;
+
+            document.getElementById('v_id').innerText = d[0];
+            document.getElementById('v_name').innerText = d[1];
+            document.getElementById('v_mob').innerText = d[3];
+            document.getElementById('v_addr').innerText = `${d[2]}, ${d[6]}, ${d[7]} - ${d[5]}`;
+            
+            // Set current status in dropdown
+            document.getElementById('updateStatusVal').value = d[11];
+
+            if(t) {
+                document.getElementById('v_tracking_id').innerText = t[2] || "N/A";
+                setupLink('v_link_label', t[6]);
+                setupLink('v_link_parcel1', t[7]);
+                setupLink('v_link_parcel2', t[8]);
+                document.getElementById('parcelPhotosContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('parcelPhotosContainer').classList.add('hidden');
+            }
+            
+            document.getElementById('modalPrintBtn').onclick = () => triggerPrint(id, d);
+            hideLoading();
             document.getElementById('viewModal').classList.replace('hidden', 'flex');
-        } catch (e) { alert("Error"); }
-        hideLoading();
+        } catch (e) { hideLoading(); alert("Fetch Error"); }
     }
 
-    function toggleEdit(on) {
-        if(on) {
-            document.getElementById('e_name').value = currentData[1];
-            document.getElementById('e_addr').value = currentData[2];
-            document.getElementById('e_mob').value = currentData[3];
-            document.getElementById('e_alt').value = currentData[4] === "N/A" ? "" : currentData[4];
-            document.getElementById('e_city').value = currentData[7];
-            document.getElementById('e_pin').value = currentData[5];
-        }
-        document.getElementById('viewContainer').classList.toggle('hidden', on);
-        document.getElementById('editContainer').classList.toggle('hidden', !on);
-    }
-
-    async function saveEdits() {
-        if(!confirm("Update cloud data permanently?")) return;
-        showLoading("Updating...");
-        const payload = {
-            action: "editOrder", orderId: currentId,
-            name: document.getElementById('e_name').value.trim(),
-            address: document.getElementById('e_addr').value.trim(),
-            mobile: document.getElementById('e_mob').value.trim(),
-            altMobile: document.getElementById('e_alt').value.trim(),
-            pincode: document.getElementById('e_pin').value.trim(),
-            city: document.getElementById('e_city').value.trim(),
-            postOffice: currentData[6], state: currentData[8], landmark: currentData[9]
-        };
-        try {
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-            if((await res.json()).status === "success") { alert("Changes Saved!"); refreshData(); closeModals(); }
-        } catch (e) { alert("Failed"); }
-        hideLoading();
-    }
-
+    // 🚀 COMMIT STATUS UPDATE TO CLOUD
     async function commitStatusUpdate() {
-        showLoading("Updating...");
+        const newStatus = document.getElementById('updateStatusVal').value;
+        if (!confirm(`Change Order ${currentViewingId} status to ${newStatus}?`)) return;
+
+        showLoading(`Updating ${currentViewingId} to ${newStatus}...`);
         try {
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "updateStatus", orderId: currentId, status: document.getElementById('updateStatusVal').value }) });
-            if((await res.json()).status === "success") { alert("Updated!"); refreshData(); closeModals(); }
-        } catch (e) { alert("Failed"); }
+            const res = await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: "updateStatus", orderId: currentViewingId, status: newStatus }) 
+            });
+            const result = await res.json();
+            if (result.status === "success") {
+                alert("✅ Status Updated Successfully!");
+                closeModals();
+                refreshData();
+            } else {
+                alert("Error: " + result.message);
+            }
+        } catch (e) { alert("Sync Failed."); }
         hideLoading();
     }
 
@@ -217,14 +288,38 @@
         document.getElementById('prId').innerText = orderId;
         document.getElementById('prName').innerText = d[1];
         document.getElementById('prAddr').innerText = d[2];
-        document.getElementById('prMob').innerText = d[3];
+        document.getElementById('prCity').innerText = d[7] || "";
+        document.getElementById('prState').innerText = d[8] || "";
+        document.getElementById('prPin').innerText = d[5] || "";
+        document.getElementById('prMob').innerText = d[3] || "";
+        
+        const lm = d[9];
+        if (lm && lm !== "N/A") { document.getElementById('prLandmark').innerText = lm; document.getElementById('prLandmarkLine').style.display = "block"; }
+        else { document.getElementById('prLandmarkLine').style.display = "none"; }
+
+        const alt = d[4];
+        if (alt && alt !== "N/A") { document.getElementById('prAltMob').innerText = alt; document.getElementById('prAltLine').style.display = "block"; }
+        else { document.getElementById('prAltLine').style.display = "none"; }
+
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: orderId, width: 95, height: 95 });
         setTimeout(() => window.print(), 800);
     }
 
+    function setupLink(id, url) {
+        const el = document.getElementById(id);
+        if (url && url.length > 10) { el.href = url; el.classList.remove('hidden'); }
+        else { el.classList.add('hidden'); }
+    }
+
+    async function generateEOD() {
+        if (!confirm("Send Analytics?")) return;
+        showLoading("Generating...");
+        try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) }); alert("✅ Dispatched!"); } catch (e) { alert("Failed."); }
+        hideLoading();
+    }
+
     function closeModals() { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
-    function toggleBreachFilter() { showBreachOnly = !showBreachOnly; renderTable(); }
     window.onload = refreshData;
 </script>
 </body>
