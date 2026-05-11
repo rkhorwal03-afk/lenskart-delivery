@@ -18,15 +18,15 @@
                 visibility: visible !important;
                 position: absolute; left: 0; top: 0;
                 width: 56mm;
-                padding: 2mm 1.5mm;
-                font-family: 'Arial Narrow', Arial, sans-serif;
-                font-size: 10pt;
+                padding: 1mm;
+                font-family: 'Arial', sans-serif !important;
+                font-size: 13px !important;
                 color: #000;
                 background: #fff;
-                line-height: 1.25;
+                line-height: 1.4 !important;
             }
             #qrcode canvas { display: none !important; }
-            #qrcode img   { display: block !important; margin: 3px auto; width: 80px; height: 80px; }
+            #qrcode img   { display: block !important; margin: 0 auto; width: 90px; height: 90px; }
             @page { margin: 0; size: 58mm auto; }
         }
         .modal-blur { backdrop-filter: blur(8px); background: rgba(15,23,42,0.65); }
@@ -37,7 +37,6 @@
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
 
-<!-- ── NAV ──────────────────────────────────────────────────────────────── -->
 <nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-700">
     <div class="max-w-xl mx-auto px-4 flex justify-between items-center h-14">
         <span class="font-black uppercase tracking-widest text-xs text-blue-400">Lenskart · Pali</span>
@@ -50,10 +49,8 @@
     </div>
 </nav>
 
-<!-- ── MAIN ─────────────────────────────────────────────────────────────── -->
 <main class="max-w-xl mx-auto p-4 space-y-6 pb-20">
 
-    <!-- NEW ORDER FORM -->
     <div id="orderFormSection" class="space-y-4">
         <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 p-6">
             <h2 class="text-xs font-black uppercase text-slate-400 mb-5 tracking-widest">New Home Delivery Order</h2>
@@ -74,7 +71,6 @@
                 <input type="text" id="landmark" placeholder="Landmark (Optional)"
                     class="w-full border-2 border-slate-200 p-3.5 rounded-2xl outline-none font-bold text-sm focus:border-blue-500 transition">
 
-                <!-- Mobile numbers -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Primary Mobile</label>
@@ -94,7 +90,6 @@
                     </div>
                 </div>
 
-                <!-- Pincode section -->
                 <div class="p-4 bg-blue-50 rounded-2xl space-y-3 border border-blue-100">
                     <div class="relative">
                         <input type="number" id="pincode" required placeholder="Enter 6-Digit Pincode"
@@ -120,7 +115,6 @@
         </div>
     </div>
 
-    <!-- REPRINT SEARCH -->
     <div id="searchSection" class="hidden space-y-4">
         <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200">
             <h2 class="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Find & Reprint Order</h2>
@@ -149,7 +143,6 @@
     </div>
 </main>
 
-<!-- ── CONFIRM MODAL ──────────────────────────────────────────────────────── -->
 <div id="confirmModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 modal-blur">
     <div class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden">
         <div class="p-5 bg-slate-50 border-b text-center">
@@ -170,7 +163,6 @@
     </div>
 </div>
 
-<!-- ── SUCCESS POPUP ─────────────────────────────────────────────────────── -->
 <div id="successPopup" class="fixed inset-0 z-[600] hidden items-center justify-center p-4 modal-blur">
     <div class="bg-white w-full max-w-xs rounded-[2rem] p-8 shadow-2xl text-center">
         <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -183,7 +175,6 @@
     </div>
 </div>
 
-<!-- ── GLOBAL LOADER ──────────────────────────────────────────────────────── -->
 <div id="globalLoader" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur">
     <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4">
         <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
@@ -191,83 +182,44 @@
     </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════════════════
-     DELIVERY SLIP  (58mm thermal print)
-     UPGRADED: Lenskart branding, courier info, both phones, clean layout
-     ══════════════════════════════════════════════════════════════════════ -->
 <div id="printArea">
-
-    <!-- HEADER -->
-    <div style="text-align:center; border-bottom:2.5px solid #000; padding-bottom:5px; margin-bottom:6px;">
-        <p style="margin:0; font-size:8pt; font-weight:900; letter-spacing:3px; text-transform:uppercase;">LENSKART</p>
-        <p style="margin:0; font-size:14pt; font-weight:900; letter-spacing:1px;">DELIVERY SLIP</p>
-        <p style="margin:2px 0 0 0; font-size:7pt; color:#444;">📞 8290776551 · Pali, Rajasthan</p>
+    
+    <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">
+        <h1 style="margin:0; font-size:18px; font-weight:bold;">DELIVERY SLIP</h1>
     </div>
 
-    <!-- ORDER META -->
-    <div style="border-bottom:1px dashed #999; padding-bottom:5px; margin-bottom:5px;">
-        <table style="width:100%; font-size:8pt; border-collapse:collapse;">
-            <tr>
-                <td style="font-weight:900;">ORDER:</td>
-                <td style="font-weight:900; text-align:right; font-size:9pt;" id="prId"></td>
-            </tr>
-            <tr>
-                <td style="color:#555;">Date:</td>
-                <td style="text-align:right; color:#555;" id="prOrderDate"></td>
-            </tr>
-        </table>
+    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4;">
+        <p style="margin:0; text-decoration: underline;">To,</p>
+        <p style="margin:4px 0 0 0;">Customer Name:- <span id="prName" style="font-weight:bold;"></span></p>
+        <p style="margin:2px 0 0 0;">Shipping Address:- <span id="prAddr"></span></p>
+        <p style="margin:2px 0 0 0;">City:- <span id="prCity"></span></p>
+        <p style="margin:2px 0 0 0;">State:- <span id="prState"></span></p>
+        <p style="margin:2px 0 0 0;">Pincode:- <span id="prPin"></span></p>
+        <p style="margin:2px 0 0 0;" id="prLandmarkLine">Landmark:- <span id="prLandmark"></span></p>
+        <p style="margin:4px 0 0 0;">Contact number:- <span id="prMob" style="font-weight:bold;"></span></p>
+        <p style="margin:2px 0 0 0;" id="prAltLine">Alt Number:- <span id="prAltMob"></span></p>
     </div>
 
-    <!-- TO / CUSTOMER DETAILS -->
-    <div style="border-bottom:1px dashed #999; padding-bottom:6px; margin-bottom:5px;">
-        <p style="margin:0; font-size:7pt; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#555;">▶ TO</p>
-        <p style="margin:2px 0 0 0; font-size:11pt; font-weight:900; text-transform:uppercase; line-height:1.1;" id="prName"></p>
-        <p style="margin:3px 0 0 0; font-size:8.5pt; line-height:1.3;" id="prFullAddr"></p>
-        <p style="margin:3px 0 0 0; font-size:7.5pt; color:#333;" id="prLandmarkLine"></p>
-        <p style="margin:4px 0 0 0; font-size:9pt; font-weight:900;">📞 <span id="prMob"></span></p>
-        <p style="margin:1px 0 0 0; font-size:8pt; color:#444; display:none;" id="prAltLine">Alt: <span id="prAltMob"></span></p>
+    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4; border-top: 1px dashed #000; padding-top: 8px;">
+        <p style="margin:0; text-decoration: underline;">From,</p>
+        <p style="margin:4px 0 0 0; font-weight:bold;">Lenskart Pali</p>
+        <p style="margin:2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Rajasthan 306401</p>
+        <p style="margin:2px 0 0 0; font-weight:bold;">Contact number:- 8290776551</p>
     </div>
 
-    <!-- COURIER / TRACKING (shown only if data exists) -->
-    <div id="prCourierSection" style="border-bottom:1px dashed #999; padding-bottom:5px; margin-bottom:5px; display:none;">
-        <p style="margin:0; font-size:7pt; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#555;">▶ COURIER</p>
-        <table style="width:100%; font-size:8pt; border-collapse:collapse; margin-top:2px;">
-            <tr>
-                <td style="font-weight:900;">Service:</td>
-                <td style="font-weight:900; text-align:right;" id="prCourier"></td>
-            </tr>
-            <tr>
-                <td>Track ID:</td>
-                <td style="text-align:right; font-family:monospace; font-weight:900;" id="prTrackId"></td>
-            </tr>
-        </table>
+    <div style="text-align:center; border-top: 1px dashed #000; padding-top: 10px;">
+        <div id="qrcode" style="display:flex; justify-content:center; margin: 0 auto 5px auto;"></div>
+        <p style="margin:0; font-size:14px; font-weight:bold;">Order id:- <span id="prId"></span></p>
     </div>
 
-    <!-- FROM -->
-    <div style="border-bottom:1px dashed #999; padding-bottom:5px; margin-bottom:6px;">
-        <p style="margin:0; font-size:7pt; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#555;">▶ FROM</p>
-        <p style="margin:2px 0 0 0; font-size:9pt; font-weight:900;">Lenskart Pali</p>
-        <p style="margin:1px 0 0 0; font-size:7.5pt; line-height:1.3;">Shop No 3 &amp; 4, Ground Floor, Ahinsa Complex,<br>Ambedkar Cir, Suraj Pole, Pali, Raj. 306401</p>
-        <p style="margin:2px 0 0 0; font-size:8pt; font-weight:900;">📞 8290776551</p>
-    </div>
-
-    <!-- QR CODE + ORDER ID -->
-    <div style="text-align:center; padding-top:4px;">
-        <div id="qrcode"></div>
-        <p style="margin:3px 0 0 0; font-size:10pt; font-weight:900; letter-spacing:1px; font-family:monospace;" id="prIdBottom"></p>
-        <p style="margin:1px 0 0 0; font-size:6pt; color:#888; letter-spacing:2px; text-transform:uppercase;">Scan to Track</p>
-    </div>
-
-</div><!-- /printArea -->
+</div>
 
 <script>
-    // ─── CONFIG ────────────────────────────────────────────────────────────
+    // ✅ YOUR SCRIPT URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
-    // const AUTH_TOKEN = "LK_PALI_2025"; // ← Uncomment when backend auth is live
 
     let tempPayload = null;
 
-    // ─── VIEW TOGGLE ───────────────────────────────────────────────────────
     function toggleView(v) {
         document.getElementById('orderFormSection').classList.toggle('hidden', v !== 'form');
         document.getElementById('searchSection').classList.toggle('hidden',    v !== 'search');
@@ -279,7 +231,6 @@
             : 'px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg';
     }
 
-    // ─── PINCODE LOOKUP ────────────────────────────────────────────────────
     let pinDebounce = null;
     function handlePincode(pin) {
         clearTimeout(pinDebounce);
@@ -308,7 +259,6 @@
         }, 400);
     }
 
-    // ─── FORM SUBMIT → CONFIRM MODAL ───────────────────────────────────────
     document.getElementById('orderForm').onsubmit = (e) => {
         e.preventDefault();
 
@@ -321,7 +271,6 @@
         if (mobile.length !== 10) { alert("Mobile number must be 10 digits."); return; }
         if (!postOffice)          { alert("Please select a Post Office."); return; }
 
-        // FIX: Store formatted number — no ' prefix needed with backend v12 (sheet col is Plain Text)
         tempPayload = {
             action:     "addOrder",
             orderId:    orderId,
@@ -333,8 +282,7 @@
             postOffice: postOffice,
             city:       document.getElementById('city').value  || "N/A",
             state:      document.getElementById('state').value || "N/A",
-            address:    document.getElementById('address').value.trim(),
-            createdAt:  new Date().toLocaleDateString("en-IN", { day:'numeric', month:'short', year:'numeric' })
+            address:    document.getElementById('address').value.trim()
         };
 
         document.getElementById('confirmContent').innerHTML = `
@@ -353,7 +301,6 @@
         document.getElementById('confirmModal').classList.replace('hidden', 'flex');
     };
 
-    // ─── SAVE TO BACKEND ───────────────────────────────────────────────────
     async function finalSync(shouldPrint) {
         closeConfirm();
         showLoading();
@@ -375,11 +322,10 @@
             }
         } catch (err) {
             hideLoading();
-            alert("Connection Error: " + err.message + "\n\nEnsure the script is deployed as 'Anyone' access.");
+            alert("Connection Error: " + err.message + "\n\nMake sure the new Web App URL is pasted in the code!");
         }
     }
 
-    // ─── SEARCH & REPRINT ──────────────────────────────────────────────────
     async function searchOrder() {
         const id = document.getElementById('searchInput').value.toUpperCase().trim();
         if (!id) { alert("Please enter an Order ID."); return; }
@@ -401,8 +347,7 @@
                     triggerPrint(d[0], {
                         name:       d[1], address: d[2], postOffice: d[6],
                         city:       d[7], state:   d[8], pincode:   d[5],
-                        landmark:   d[9], mobile:  d[3], altMobile: d[4],
-                        createdAt:  new Date(d[10]).toLocaleDateString("en-IN", { day:'numeric', month:'short', year:'numeric' })
+                        landmark:   d[9], mobile:  d[3], altMobile: d[4]
                     }, t);
                 };
             } else {
@@ -415,65 +360,46 @@
         hideLoading();
     }
 
-    // ─── PRINT DELIVERY SLIP ───────────────────────────────────────────────
-    // FIX: Unified field names, courier info, better slip layout
     function triggerPrint(orderId, data, track) {
-        // ORDER META
-        setText('prId',       orderId);
-        setText('prIdBottom', orderId);
-        setText('prOrderDate', data.createdAt || new Date().toLocaleDateString("en-IN", { day:'numeric', month:'short', year:'numeric' }));
-
-        // CUSTOMER
+        setText('prId', orderId);
         setText('prName', data.name || "");
-
-        // FULL ADDRESS — compact single-line format for thermal
-        const addr = [
-            data.address,
-            data.postOffice ? data.postOffice : "",
-            [data.city, data.state].filter(Boolean).join(", ") + (data.pincode ? " — " + data.pincode : "")
-        ].filter(Boolean).join(", ");
-        setText('prFullAddr', addr);
+        
+        const po = data.postOffice || data.po || "";
+        setText('prAddr', data.address + (po ? ", " + po : ""));
+        
+        setText('prCity', data.city || "");
+        setText('prState', data.state || "");
+        setText('prPin', data.pincode || data.pin || "");
 
         const lm = data.landmark || data.lm || "";
-        const lmLine = document.getElementById('prLandmarkLine');
-        if (lm && lm !== "N/A") { lmLine.innerText = "🏠 " + lm; lmLine.style.display = "block"; }
-        else { lmLine.style.display = "none"; }
+        if (lm && lm !== "N/A") {
+            setText('prLandmark', lm);
+            document.getElementById('prLandmarkLine').style.display = 'block';
+        } else {
+            document.getElementById('prLandmarkLine').style.display = 'none';
+        }
 
-        // MOBILE
         setText('prMob', data.mobile || data.mob || "");
+
         const alt = data.altMobile || data.altMob || "";
-        const altLine = document.getElementById('prAltLine');
         if (alt && alt !== "N/A") {
             setText('prAltMob', alt);
-            altLine.style.display = "block";
+            document.getElementById('prAltLine').style.display = 'block';
         } else {
-            altLine.style.display = "none";
+            document.getElementById('prAltLine').style.display = 'none';
         }
 
-        // COURIER SECTION (shown only if dispatch data exists)
-        const courierSection = document.getElementById('prCourierSection');
-        if (track && track[1] && track[1] !== "N/A") {
-            setText('prCourier',  track[1]);
-            setText('prTrackId',  track[2] || "—");
-            courierSection.style.display = "block";
-        } else {
-            courierSection.style.display = "none";
-        }
-
-        // QR CODE — wait for render then print
         document.getElementById('qrcode').innerHTML = "";
-        const qr = new QRCode(document.getElementById("qrcode"), {
-            text:         orderId,
-            width:        90,
-            height:       90,
+        new QRCode(document.getElementById("qrcode"), {
+            text: orderId,
+            width: 100,
+            height: 100,
             correctLevel: QRCode.CorrectLevel.H
         });
 
-        // FIX: Use render callback instead of arbitrary timeout
         setTimeout(() => window.print(), 800);
     }
 
-    // ─── UTILS ────────────────────────────────────────────────────────────
     function setText(id, val) { document.getElementById(id).innerText = val || ""; }
     function escHtml(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
     function showLoading() { document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
