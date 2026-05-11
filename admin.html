@@ -24,11 +24,21 @@
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        #globalLoader { backdrop-filter: blur(4px); z-index: 1000; }
+        /* ── RESTORED: Beautified Slip CSS (58mm) ── */
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
-            #printArea { display: block !important; width: 54mm; color: #000; background: #fff; padding: 1mm; font-family: Arial !important; }
+            #printArea { 
+                display: block !important; 
+                width: 54mm; 
+                color: #000; 
+                background: #fff; 
+                padding: 1mm; 
+                font-family: Arial, sans-serif !important;
+                line-height: 1.3;
+            }
+            #qrcode canvas { display: none !important; }
+            #qrcode img { display: block !important; margin: 0 auto; width: 95px; height: 95px; }
             @page { margin: 0; size: 58mm auto; }
         }
     </style>
@@ -42,40 +52,34 @@
             <span class="text-[9px] bg-blue-600 px-2 py-0.5 rounded font-black uppercase">Lenskart Pali</span>
         </div>
         <div class="flex gap-2">
-            <button onclick="generateEOD()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-[10px] font-black uppercase transition">EOD Report</button>
+            <button onclick="generateEOD()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-[10px] font-black uppercase transition">EOD Summary</button>
             <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-[10px] font-black uppercase shadow-lg transition">Refresh DB</button>
         </div>
     </div>
 </nav>
 
 <div class="max-w-[1600px] mx-auto p-4 space-y-4">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-slate-400 uppercase">Load</p><h3 id="stat-total" class="text-2xl font-black">0</h3></div>
-        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-blue-500 uppercase">New</p><h3 id="stat-created" class="text-2xl font-black">0</h3></div>
-        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-rose-600 uppercase">Breach</p><h3 id="stat-breach" class="text-2xl font-black">0</h3></div>
-        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-green-500 uppercase">Transit</p><h3 id="stat-dispatch" class="text-2xl font-black">0</h3></div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-white p-4 rounded border border-slate-200 shadow-sm"><p class="text-[9px] font-black text-slate-400 uppercase">Total Load</p><h3 id="stat-total" class="text-2xl font-black">0</h3></div>
+        <div class="bg-white p-4 rounded border border-slate-200 shadow-sm"><p class="text-[9px] font-black text-blue-500 uppercase">New Orders</p><h3 id="stat-created" class="text-2xl font-black text-blue-600">0</h3></div>
+        <div class="bg-white p-4 rounded border border-slate-200 shadow-sm"><p class="text-[9px] font-black text-green-500 uppercase">In Transit</p><h3 id="stat-dispatch" class="text-2xl font-black text-green-600">0</h3></div>
+        <div class="bg-rose-50 p-4 rounded border border-rose-200 shadow-sm"><p class="text-[9px] font-black text-rose-600 uppercase">Breach Tab</p><h3 id="stat-breach" class="text-2xl font-black text-rose-600">0</h3></div>
+        <div class="hidden md:block bg-white p-4 rounded border border-slate-200 shadow-sm text-center">
+            <p class="text-[9px] font-black text-slate-400 uppercase">Status</p>
+            <p class="text-[10px] font-black text-green-600 mt-2"><i class="fa-solid fa-circle-check"></i> CLOUD ACTIVE</p>
+        </div>
     </div>
 
     <div class="bg-slate-100 p-3 rounded-lg flex flex-wrap gap-3 items-center border border-slate-200">
-        <div class="flex-1 min-w-[250px]"><input id="searchBox" oninput="renderTable()" type="text" placeholder="Filter ID, Name, Mobile..." class="w-full border border-slate-300 px-4 py-2 text-xs font-bold rounded outline-none shadow-sm"></div>
-        <button id="breachToggle" onclick="toggleBreachFilter()" class="bg-white border px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm transition"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Breach Tab</button>
-        <select id="statusFilter" onchange="renderTable()" class="bg-white border px-3 py-2 text-xs font-bold rounded outline-none shadow-sm"><option value="">All Status</option><option value="Created">Created</option><option value="Dispatch">Dispatch</option><option value="Delivered">Delivered</option></select>
+        <div class="flex-1 min-w-[250px]"><input id="searchBox" oninput="renderTable()" type="text" placeholder="Search ID, Name, Mobile or Area..." class="w-full border border-slate-300 px-4 py-2 text-xs font-bold rounded outline-none shadow-sm"></div>
+        <button id="breachToggle" onclick="toggleBreachFilter()" class="bg-white border border-slate-300 text-slate-500 hover:bg-rose-600 hover:text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm transition"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Filter Breach</button>
+        <select id="statusFilter" onchange="renderTable()" class="bg-white border border-slate-300 px-3 py-2 text-xs font-bold rounded outline-none shadow-sm"><option value="">All Statuses</option><option value="Created">Created</option><option value="Dispatch">Dispatch</option><option value="Delivered">Delivered</option></select>
     </div>
 
     <div class="bg-white border border-slate-200 rounded shadow-xl overflow-hidden">
         <div class="overflow-x-auto">
             <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Order ID</th>
-                        <th>Customer</th>
-                        <th>Mobile</th>
-                        <th>Age</th>
-                        <th>Status</th>
-                        <th class="text-center">Action</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Date</th><th>Order ID</th><th>Customer</th><th>Mobile</th><th>Area / City</th><th>Age</th><th>Status</th><th class="text-center">Action</th></tr></thead>
                 <tbody id="masterTableBody"></tbody>
             </table>
         </div>
@@ -83,38 +87,14 @@
 </div>
 
 <div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden">
-        <div class="p-5 bg-slate-50 border-b flex justify-between items-center">
-            <h3 id="v_id" class="text-lg font-black text-blue-600 font-mono"></h3>
-            <button onclick="closeModals()" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
-        </div>
+    <div class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden">
+        <div class="p-5 bg-slate-50 border-b flex justify-between items-center"><h3 id="v_id" class="text-lg font-black text-blue-600 font-mono"></h3><button onclick="closeModals()" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-circle-xmark text-2xl"></i></button></div>
         <div class="p-6 space-y-5">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-4">
-                    <div class="bg-slate-50 p-4 border rounded-lg">
-                        <p class="text-[9px] font-black text-slate-400 uppercase">Customer Profile</p>
-                        <p id="v_name" class="font-black text-md uppercase text-slate-800 mt-1"></p>
-                        <p id="v_mob" class="text-xs font-bold text-blue-600"></p>
-                        <p id="v_addr" class="text-[11px] text-slate-500 mt-2 leading-tight"></p>
-                    </div>
-
-                    <div id="v_track_info" class="hidden bg-blue-50 p-4 border border-blue-100 rounded-lg">
-                        <p class="text-[9px] font-black text-blue-400 uppercase">Tracking Details</p>
-                        <p class="text-sm font-black text-blue-900 mt-1"><span id="v_courier"></span></p>
-                        <p class="text-xs font-bold text-blue-700">AWB: <span id="v_trackid" class="select-all"></span></p>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <div id="parcelPhotosContainer" class="hidden bg-slate-50 p-4 border rounded-lg space-y-2">
-                        <p class="text-[9px] font-black text-slate-400 uppercase">Attachments</p>
-                        <a id="v_link_label" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-barcode mr-2"></i>View Label</a>
-                        <a id="v_link_parcel1" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box mr-2"></i>View Pic 1</a>
-                        <a id="v_link_parcel2" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box-open mr-2"></i>View Pic 2</a>
-                    </div>
-                    <button id="modalPrintBtn" class="w-full bg-slate-900 text-white font-black py-4 rounded uppercase text-xs hover:bg-black transition">Reprint Delivery Slip</button>
-                </div>
+                <div class="bg-slate-50 p-4 border rounded-lg"><p class="text-[9px] font-black text-slate-400 uppercase">Customer Info</p><p id="v_name" class="font-black text-md uppercase mt-1"></p><p id="v_mob" class="text-xs font-bold text-blue-600"></p><p id="v_addr" class="text-[11px] text-slate-500 mt-2 leading-tight"></p></div>
+                <div id="parcelPhotosContainer" class="hidden bg-slate-50 p-4 border rounded-lg space-y-2"><p class="text-[9px] font-black text-slate-400 uppercase">Logistics Proof</p><a id="v_link_label" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline">Label File</a><a id="v_link_parcel1" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline">Pic 1</a><a id="v_link_parcel2" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline">Pic 2</a></div>
             </div>
+            <button id="modalPrintBtn" class="w-full bg-slate-900 text-white font-black py-4 rounded uppercase text-xs hover:bg-black transition">Execute Print Slip</button>
         </div>
     </div>
 </div>
@@ -122,30 +102,41 @@
 <div id="globalLoader" class="fixed inset-0 z-[600] hidden items-center justify-center bg-slate-900/50">
     <div class="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 text-center border-t-4 border-blue-600">
         <div class="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-        <div><p id="loaderMsg" class="text-[11px] font-black uppercase tracking-widest text-slate-800">Processing Data...</p><p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Please Wait</p></div>
+        <div><p id="loaderMsg" class="text-[11px] font-black uppercase tracking-widest text-slate-800">Processing...</p><p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Please Wait</p></div>
     </div>
 </div>
 
 <div id="printArea">
     <div style="text-align: center; border-bottom: 2.5px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
         <p style="margin: 0; font-size: 10pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">LENSKART</p>
-        <h1 style="margin: 0; font-size: 16pt; font-weight: 900; text-decoration: underline;">DELIVERY SLIP</h1>
+        <h1 style="margin: 0; font-size: 16pt; font-weight: 900; line-height: 1.1; text-decoration: underline;">DELIVERY SLIP</h1>
     </div>
+
     <div style="margin-bottom: 12px; font-size: 11pt; line-height: 1.4;">
         <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 10pt;">TO,</p>
         <p style="margin: 4px 0 0 0;"><b>Customer Name:-</b> <span id="prName" style="text-transform: uppercase; font-weight:900;"></span></p>
         <p style="margin: 2px 0 0 0;"><b>Shipping Address:-</b> <span id="prAddr"></span></p>
         <p style="margin: 2px 0 0 0;"><b>City:-</b> <span id="prCity"></span></p>
-        <p style="margin: 4px 0 0 0;"><b>Contact:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>State:-</b> <span id="prState"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>Pincode:-</b> <span id="prPin"></span></p>
+        <p style="margin: 2px 0 0 0;" id="prLandmarkLine"><b>Landmark:-</b> <span id="prLandmark"></span></p>
+        
+        <div style="margin-top: 6px; border-top: 1px dashed #000; padding-top: 4px;">
+            <p style="margin: 0;"><b>Contact number:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
+            <p style="margin: 2px 0 0 0;" id="prAltLine"><b>Alt Number:-</b> <span id="prAltMob"></span></p>
+        </div>
     </div>
+
     <div style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 12px; font-size: 10pt; line-height: 1.3;">
         <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 9pt;">FROM,</p>
         <p style="margin: 4px 0 0 0; font-weight: 900; font-size: 11pt;">LENSKART PALI</p>
-        <p style="margin: 0;">📞 8290776551</p>
+        <p style="margin: 2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Raj. 306401</p>
+        <p style="margin: 4px 0 0 0;"><b>Contact:-</b> 8290776551</p>
     </div>
+
     <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px;">
         <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 6px;"></div>
-        <p style="margin: 0; font-weight: 900; font-size: 14pt;">Order id:- <span id="prId"></span></p>
+        <p style="margin: 0; font-weight: 900; font-size: 14pt; font-family: 'Courier New', Courier, monospace;">Order id:- <span id="prId"></span></p>
     </div>
 </div>
 
@@ -154,11 +145,11 @@
     let allOrders = [];
     let showBreachOnly = false;
 
-    function showLoading(m) { document.getElementById('loaderMsg').innerText = m; document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
+    function showLoading(m = "Loading Data...") { document.getElementById('loaderMsg').innerText = m; document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
     function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
 
     async function refreshData() {
-        showLoading("Syncing DB...");
+        showLoading("Syncing Cloud Data...");
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
             const result = await res.json();
@@ -169,7 +160,7 @@
 
     function toggleBreachFilter() {
         showBreachOnly = !showBreachOnly;
-        document.getElementById('breachToggle').className = showBreachOnly ? "bg-rose-600 text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-lg" : "bg-white border px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm";
+        document.getElementById('breachToggle').className = showBreachOnly ? "bg-rose-600 text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-lg" : "bg-white border border-slate-300 text-slate-500 px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm";
         renderTable();
     }
 
@@ -193,7 +184,7 @@
         const filtered = allOrders.filter(o => {
             const age = Math.floor((now - new Date(o[3])) / 864e5);
             const isBreach = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
-            const matchesSearch = (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q) || o[2].includes(q));
+            const matchesSearch = (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q) || o[2].includes(q) || o[7].toUpperCase().includes(q));
             const matchesStatus = (f === "" || o[4] === f);
             const matchesBreach = showBreachOnly ? isBreach : true;
             return matchesSearch && matchesStatus && matchesBreach;
@@ -202,12 +193,12 @@
         tbody.innerHTML = filtered.map(o => {
             const age = Math.floor((now - new Date(o[3])) / 864e5);
             const isBreach = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
-            return `<tr><td>${new Date(o[3]).toLocaleDateString('en-IN')}</td><td class="font-black text-blue-600">${o[0]}</td><td class="font-bold uppercase">${o[1]}</td><td class="text-blue-700">${o[2]}</td><td class="${isBreach ? 'text-rose-600 font-black' : 'text-slate-400 font-bold'}">${age} Days</td><td><span class="badge badge-${o[4]}">${o[4]}</span> ${isBreach ? '<span class="badge badge-BREACH">DELAY</span>' : ''}</td><td class="text-center"><button onclick="viewOrder('${o[0]}')" class="bg-slate-900 text-white px-3 py-1 rounded text-[9px] font-black uppercase transition active:scale-95">Analyse</button></td></tr>`;
+            return `<tr><td>${new Date(o[3]).toLocaleDateString('en-IN')}</td><td class="font-black text-blue-600">${o[0]}</td><td class="font-bold uppercase">${o[1]}</td><td class="text-blue-700">${o[2]}</td><td class="text-slate-500">${o[7]} / ${o[6]}</td><td class="${isBreach ? 'text-rose-600' : ''}">${age} Days</td><td><span class="badge badge-${o[4]}">${o[4]}</span> ${isBreach ? '<span class="badge badge-BREACH">DELAY</span>' : ''}</td><td class="text-center"><button onclick="viewOrder('${o[0]}')" class="bg-slate-900 text-white px-3 py-1 rounded text-[9px] font-black uppercase">Analyse</button></td></tr>`;
         }).join('');
     }
 
     async function viewOrder(id) {
-        showLoading(`Drilling Down ID: ${id}`);
+        showLoading(`Opening ID: ${id}`);
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
             const result = await res.json();
@@ -219,15 +210,6 @@
             document.getElementById('v_mob').innerText = d[3];
             document.getElementById('v_addr').innerText = `${d[2]}, ${d[6]}, ${d[7]} - ${d[5]}`;
             
-            // 🚀 FILL TRACKING INFO (ADDED)
-            if (t) {
-                document.getElementById('v_track_info').classList.remove('hidden');
-                document.getElementById('v_courier').innerText = "Courier: " + (t[1] || "N/A");
-                document.getElementById('v_trackid').innerText = t[2] || "N/A";
-            } else {
-                document.getElementById('v_track_info').classList.add('hidden');
-            }
-
             setupLink('v_link_label', t ? t[6] : "");
             setupLink('v_link_parcel1', t ? t[7] : "");
             setupLink('v_link_parcel2', t ? t[8] : "");
@@ -244,7 +226,18 @@
         document.getElementById('prName').innerText = d[1];
         document.getElementById('prAddr').innerText = d[2];
         document.getElementById('prCity').innerText = d[7] || "";
+        document.getElementById('prState').innerText = d[8] || "";
+        document.getElementById('prPin').innerText = d[5] || "";
         document.getElementById('prMob').innerText = d[3] || "";
+        
+        const lm = d[9];
+        if (lm && lm !== "N/A") { document.getElementById('prLandmark').innerText = lm; document.getElementById('prLandmarkLine').style.display = "block"; }
+        else { document.getElementById('prLandmarkLine').style.display = "none"; }
+
+        const alt = d[4];
+        if (alt && alt !== "N/A") { document.getElementById('prAltMob').innerText = alt; document.getElementById('prAltLine').style.display = "block"; }
+        else { document.getElementById('prAltLine').style.display = "none"; }
+
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: orderId, width: 95, height: 95 });
         setTimeout(() => window.print(), 800);
@@ -257,9 +250,9 @@
     }
 
     async function generateEOD() {
-        if (!confirm("Email Summary?")) return;
+        if (!confirm("Send Analytics to Outlook?")) return;
         showLoading("Generating Report...");
-        try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) }); alert("✅ EOD Dispatched!"); } catch (e) { alert("Failed."); }
+        try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) }); alert("✅ Dispatched!"); } catch (e) { alert("Failed."); }
         hideLoading();
     }
 
