@@ -18,21 +18,20 @@
                 visibility: visible !important;
                 position: absolute; left: 0; top: 0;
                 width: 56mm;
-                padding: 2mm 1.5mm;
-                font-family: 'Arial Narrow', Arial, sans-serif;
-                font-size: 10pt;
+                padding: 1mm;
+                font-family: 'Arial', sans-serif !important;
+                font-size: 13px !important;
                 color: #000;
                 background: #fff;
-                line-height: 1.25;
+                line-height: 1.4 !important;
             }
             #qrcode canvas { display: none !important; }
-            #qrcode img   { display: block !important; margin: 3px auto; width: 80px; height: 80px; }
+            #qrcode img   { display: block !important; margin: 0 auto; width: 90px; height: 90px; }
             @page { margin: 0; size: 58mm auto; }
         }
         .modal-blur { backdrop-filter: blur(8px); background: rgba(15,23,42,0.65); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-        /* Status badge colors */
         .badge-created   { background:#dbeafe; color:#1d4ed8; }
         .badge-received  { background:#fef9c3; color:#a16207; }
         .badge-packed    { background:#ede9fe; color:#6d28d9; }
@@ -46,21 +45,18 @@
 
         #masterTableBody tr { transition: background 0.15s; }
         #masterTableBody tr:hover { background: #f8fafc; }
-
-        /* Image viewer */
         .img-thumb { cursor:zoom-in; transition:transform 0.15s; }
         .img-thumb:hover { transform:scale(1.05); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
 
-<!-- ── NAV ──────────────────────────────────────────────────────────────── -->
 <nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-800">
     <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-14">
         <div class="flex items-center gap-4">
             <span class="font-black uppercase tracking-widest text-xs text-blue-400">Lenskart · Pali</span>
             <div class="flex gap-1">
-                <a href="store.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-50">Store</a>
+                <a href="index.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-50">Store</a>
                 <a href="rider.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-50">Rider</a>
                 <a href="admin.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase bg-purple-600 rounded-lg">Master</a>
             </div>
@@ -88,7 +84,6 @@
     </div>
 </nav>
 
-<!-- ── STATS BAR ─────────────────────────────────────────────────────────── -->
 <div class="bg-white border-b border-slate-100 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 py-3 flex gap-3 overflow-x-auto scrollbar-hide">
         <div class="shrink-0 text-center px-4">
@@ -124,7 +119,6 @@
     </div>
 </div>
 
-<!-- ── ORDER TABLE ───────────────────────────────────────────────────────── -->
 <main class="p-4 lg:p-6 max-w-7xl mx-auto">
     <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">
@@ -148,7 +142,6 @@
     </div>
 </main>
 
-<!-- ── VIEW ORDER MODAL ──────────────────────────────────────────────────── -->
 <div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 modal-blur">
     <div class="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden">
         <div class="p-5 bg-slate-50 border-b flex justify-between items-center">
@@ -162,7 +155,6 @@
         </div>
         <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto scrollbar-hide">
 
-            <!-- Customer Info -->
             <div class="p-4 bg-slate-50 rounded-2xl space-y-1">
                 <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Customer</p>
                 <p id="v_name"   class="font-black text-base uppercase"></p>
@@ -171,7 +163,6 @@
                 <p id="v_date"   class="text-[9px] font-bold text-slate-400 mt-1"></p>
             </div>
 
-            <!-- Address -->
             <div class="p-4 bg-slate-50 rounded-2xl space-y-1">
                 <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Shipping Address</p>
                 <p id="v_addr"     class="text-xs font-bold leading-relaxed"></p>
@@ -179,7 +170,6 @@
                 <p id="v_lm"       class="mt-1 text-[9px] font-black text-blue-700 bg-blue-50 px-2 py-1 rounded-lg inline-block"></p>
             </div>
 
-            <!-- Dispatch Info (shown when dispatched) -->
             <div id="v_dispatch_block" class="p-4 bg-green-50 rounded-2xl space-y-1 hidden">
                 <p class="text-[8px] font-black text-green-600 uppercase tracking-widest">Dispatch Info</p>
                 <p id="v_courier"   class="text-sm font-black"></p>
@@ -189,7 +179,6 @@
                 <p id="v_ocr"       class="text-[10px] font-bold text-slate-400 italic"></p>
             </div>
 
-            <!-- 3 Photos -->
             <div>
                 <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Parcel Photos</p>
                 <div class="grid grid-cols-3 gap-2">
@@ -221,12 +210,10 @@
     </div>
 </div>
 
-<!-- ── IMAGE FULLSCREEN ──────────────────────────────────────────────────── -->
 <div id="imgModal" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur" onclick="closeImgFull()">
     <img id="imgFull" src="" class="max-h-[90vh] max-w-full rounded-2xl shadow-2xl object-contain">
 </div>
 
-<!-- ── GLOBAL LOADER ──────────────────────────────────────────────────────── -->
 <div id="globalLoader" class="fixed inset-0 z-[600] hidden items-center justify-center p-4 modal-blur">
     <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4">
         <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
@@ -234,115 +221,72 @@
     </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════════════════
-     DELIVERY SLIP (58mm thermal) — UPGRADED
-     Includes: Order date, courier info, both phones, proper FROM section
-     ══════════════════════════════════════════════════════════════════════ -->
 <div id="printArea">
-
-    <!-- HEADER -->
-    <div style="text-align:center; border-bottom:2.5px solid #000; padding-bottom:5px; margin-bottom:6px;">
-        <p style="margin:0; font-size:8pt; font-weight:900; letter-spacing:3px; text-transform:uppercase;">LENSKART</p>
-        <p style="margin:0; font-size:14pt; font-weight:900; letter-spacing:1px;">DELIVERY SLIP</p>
-        <p style="margin:2px 0 0 0; font-size:7pt; color:#444;">📞 8290776551 · Pali, Rajasthan</p>
+    
+    <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">
+        <h1 style="margin:0; font-size:18px; font-weight:bold;">DELIVERY SLIP</h1>
     </div>
 
-    <!-- ORDER META -->
-    <div style="border-bottom:1px dashed #999; padding-bottom:5px; margin-bottom:5px;">
-        <table style="width:100%; font-size:8pt; border-collapse:collapse;">
-            <tr>
-                <td style="font-weight:900;">ORDER:</td>
-                <td style="font-weight:900; text-align:right; font-size:9pt;" id="prId"></td>
-            </tr>
-            <tr>
-                <td style="color:#555;">Date:</td>
-                <td style="text-align:right; color:#555;" id="prOrderDate"></td>
-            </tr>
-        </table>
+    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4;">
+        <p style="margin:0; text-decoration: underline;">To,</p>
+        <p style="margin:4px 0 0 0;">Customer Name:- <span id="prName" style="font-weight:bold;"></span></p>
+        <p style="margin:2px 0 0 0;">Shipping Address:- <span id="prAddr"></span></p>
+        <p style="margin:2px 0 0 0;">City:- <span id="prCity"></span></p>
+        <p style="margin:2px 0 0 0;">State:- <span id="prState"></span></p>
+        <p style="margin:2px 0 0 0;">Pincode:- <span id="prPin"></span></p>
+        <p style="margin:2px 0 0 0;" id="prLandmarkLine">Landmark:- <span id="prLandmark"></span></p>
+        <p style="margin:4px 0 0 0;">Contact number:- <span id="prMob" style="font-weight:bold;"></span></p>
+        <p style="margin:2px 0 0 0;" id="prAltLine">Alt Number:- <span id="prAltMob"></span></p>
     </div>
 
-    <!-- TO / CUSTOMER -->
-    <div style="border-bottom:1px dashed #999; padding-bottom:6px; margin-bottom:5px;">
-        <p style="margin:0; font-size:7pt; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#555;">▶ TO</p>
-        <p style="margin:2px 0 0 0; font-size:11pt; font-weight:900; text-transform:uppercase; line-height:1.1;" id="prName"></p>
-        <p style="margin:3px 0 0 0; font-size:8.5pt; line-height:1.3;" id="prFullAddr"></p>
-        <p style="margin:3px 0 0 0; font-size:7.5pt; color:#333; display:none;" id="prLandmarkLine"></p>
-        <p style="margin:4px 0 0 0; font-size:9pt; font-weight:900;">📞 <span id="prMob"></span></p>
-        <p style="margin:1px 0 0 0; font-size:8pt; color:#444; display:none;" id="prAltLine">Alt: <span id="prAltMob"></span></p>
+    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4; border-top: 1px dashed #000; padding-top: 8px;">
+        <p style="margin:0; text-decoration: underline;">From,</p>
+        <p style="margin:4px 0 0 0; font-weight:bold;">Lenskart Pali</p>
+        <p style="margin:2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Rajasthan 306401</p>
+        <p style="margin:2px 0 0 0; font-weight:bold;">Contact number:- 8290776551</p>
     </div>
 
-    <!-- COURIER (shown only if dispatched) -->
-    <div id="prCourierSection" style="border-bottom:1px dashed #999; padding-bottom:5px; margin-bottom:5px; display:none;">
-        <p style="margin:0; font-size:7pt; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#555;">▶ COURIER</p>
-        <table style="width:100%; font-size:8pt; border-collapse:collapse; margin-top:2px;">
-            <tr>
-                <td style="font-weight:900;">Service:</td>
-                <td style="font-weight:900; text-align:right;" id="prCourier"></td>
-            </tr>
-            <tr>
-                <td>Track ID:</td>
-                <td style="text-align:right; font-family:monospace; font-weight:900;" id="prTrackId"></td>
-            </tr>
-        </table>
+    <div style="text-align:center; border-top: 1px dashed #000; padding-top: 10px;">
+        <div id="qrcode" style="display:flex; justify-content:center; margin: 0 auto 5px auto;"></div>
+        <p style="margin:0; font-size:14px; font-weight:bold;">Order id:- <span id="prId"></span></p>
     </div>
 
-    <!-- FROM -->
-    <div style="border-bottom:1px dashed #999; padding-bottom:5px; margin-bottom:6px;">
-        <p style="margin:0; font-size:7pt; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#555;">▶ FROM</p>
-        <p style="margin:2px 0 0 0; font-size:9pt; font-weight:900;">Lenskart Pali</p>
-        <p style="margin:1px 0 0 0; font-size:7.5pt; line-height:1.3;">Shop No 3 &amp; 4, Ground Floor, Ahinsa Complex,<br>Ambedkar Cir, Suraj Pole, Pali, Raj. 306401</p>
-        <p style="margin:2px 0 0 0; font-size:8pt; font-weight:900;">📞 8290776551</p>
-    </div>
-
-    <!-- QR + ORDER ID -->
-    <div style="text-align:center; padding-top:4px;">
-        <div id="qrcode"></div>
-        <p style="margin:3px 0 0 0; font-size:10pt; font-weight:900; letter-spacing:1px; font-family:monospace;" id="prIdBottom"></p>
-        <p style="margin:1px 0 0 0; font-size:6pt; color:#888; letter-spacing:2px; text-transform:uppercase;">Scan to Track</p>
-    </div>
-
-</div><!-- /printArea -->
+</div>
 
 <script>
-    // ─── CONFIG ────────────────────────────────────────────────────────────
+    // ✅ YOUR SCRIPT URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
 
-    // ─── STATE ─────────────────────────────────────────────────────────────
-    let allOrders = []; // FIX: separate master array so filter/reverse don't corrupt it
+    let allOrders = [];
 
-    // ─── LOAD DATA ─────────────────────────────────────────────────────────
     async function refreshData() {
         showLoader("Refreshing orders...");
         try {
             const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
             const result = await res.json();
             if (result.status === "success") {
-                allOrders = result.orders; // store original
+                allOrders = result.orders; 
                 renderTable(allOrders);
             } else {
                 alert("Load Error: " + (result.message || "Unknown"));
             }
         } catch (err) {
-            alert("Network Error: " + err.message);
+            alert("Network Error: Make sure your Script is deployed to 'Anyone'!");
         }
         hideLoader();
     }
 
-    // ─── RENDER TABLE ──────────────────────────────────────────────────────
-    // FIX: Use [...allOrders].reverse() so we never mutate the master array
     function renderTable(orders) {
         const tbody      = document.getElementById('masterTableBody');
         const statusFilter = document.getElementById('statusFilter').value;
         const searchQ    = document.getElementById('searchBox').value.toUpperCase().trim();
 
-        // Filter
         let filtered = [...orders].reverse();
         if (statusFilter) filtered = filtered.filter(o => o[4] === statusFilter);
         if (searchQ)      filtered = filtered.filter(o =>
             o[0].toUpperCase().includes(searchQ) || o[1].toUpperCase().includes(searchQ)
         );
 
-        // Stats from ALL orders
         const counts = { Created:0, Received:0, Packed:0, Dispatch:0, Delivered:0, breach:0 };
         for (const o of orders) {
             if (counts[o[4]] !== undefined) counts[o[4]]++;
@@ -370,7 +314,6 @@
                                 order[4] === 'Dispatch'  ? 'status-row-dispatch' :
                                 order[4] === 'Delivered' ? 'status-row-delivered' : '';
 
-            // FIX: escHtml to prevent XSS
             return `
             <tr class="${rowClass}">
                 <td class="p-4">
@@ -404,12 +347,8 @@
         }).join('');
     }
 
-    // ─── FILTER TABLE ──────────────────────────────────────────────────────
-    function filterTable() {
-        renderTable(allOrders);
-    }
+    function filterTable() { renderTable(allOrders); }
 
-    // ─── TAT / BREACH HELPERS ──────────────────────────────────────────────
     function isBreach(order) {
         const status    = order[4];
         const created   = new Date(order[3]);
@@ -429,7 +368,16 @@
         return `<span class="${cls} text-[7px] font-black px-1.5 py-0.5 rounded-md uppercase">${status}</span>`;
     }
 
-    // ─── VIEW ORDER DETAIL ─────────────────────────────────────────────────
+    // 🚀 FIXED: Helper to convert Google Drive view URLs to direct HTML img display URLs
+    function getDriveImage(url) {
+        if(!url) return "";
+        if(url.includes("view?usp=drivesdk")) {
+            const id = url.match(/\/d\/(.+?)\//);
+            if(id && id[1]) return `https://drive.google.com/uc?export=view&id=${id[1]}`;
+        }
+        return url;
+    }
+
     async function viewOrder(id) {
         showLoader("Loading order...");
         try {
@@ -453,7 +401,6 @@
             setText('v_location', `${d[6]}, ${d[7]}, ${d[8]} — ${d[5]}`);
             setText('v_lm',       d[9] && d[9] !== "N/A" ? "🏠 " + d[9] : "");
 
-            // Dispatch block
             const dispBlock = document.getElementById('v_dispatch_block');
             if (t) {
                 setText('v_courier',  "🚚 " + (t[1] || "N/A"));
@@ -466,12 +413,11 @@
                 dispBlock.classList.add('hidden');
             }
 
-            // 3 images
-            setImgSrc('v_img_label',   t ? t[6] : "");
-            setImgSrc('v_img_parcel1', t ? t[7] : "");
-            setImgSrc('v_img_parcel2', t ? t[8] : "");
+            // 🚀 FIXED: Images now load properly inside the admin panel!
+            setImgSrc('v_img_label',   t ? getDriveImage(t[6]) : "");
+            setImgSrc('v_img_parcel1', t ? getDriveImage(t[7]) : "");
+            setImgSrc('v_img_parcel2', t ? getDriveImage(t[8]) : "");
 
-            // Print button — FIX: pass full data including tracking
             document.getElementById('modalPrintBtn').onclick = () => {
                 triggerPrint(d[0], {
                     name:      d[1], address: d[2], po:  d[6],
@@ -489,28 +435,14 @@
         }
     }
 
-    // ─── UPDATE STATUS ─────────────────────────────────────────────────────
     async function updateStatus(id, newStatus) {
-        // Optimistic UI: update local array immediately
         const order = allOrders.find(o => o[0] === id);
-        if (order) {
-            order[4] = newStatus;
-            order[5] = new Date().toISOString();
-        }
+        if (order) { order[4] = newStatus; order[5] = new Date().toISOString(); }
         renderTable(allOrders);
-
-        try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body:   JSON.stringify({ action: "updateStatus", orderId: id, status: newStatus })
-            });
-            // Silent success — no full reload needed for status change
-        } catch (err) {
-            alert("Status Update Failed: " + err.message);
-        }
+        try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "updateStatus", orderId: id, status: newStatus }) }); } 
+        catch (err) { alert("Status Update Failed: " + err.message); }
     }
 
-    // ─── EOD REPORT ────────────────────────────────────────────────────────
     async function generateEOD() {
         if (!confirm("Send EOD Report to store email?")) return;
         showLoader("Generating EOD...");
@@ -525,62 +457,47 @@
         }
     }
 
-    // ─── PRINT DELIVERY SLIP ───────────────────────────────────────────────
-    // FIX: Unified field names (po not postOffice, handled cleanly)
-    // FIX: Courier info now included on reprint if dispatched
+    // EXACT LINE-BY-LINE PRINT MAPPING
     function triggerPrint(orderId, data, track) {
-        // ORDER META
-        setText('prId',        orderId);
-        setText('prIdBottom',  orderId);
-        setText('prOrderDate', data.createdAt || formatDate(new Date()));
-
-        // CUSTOMER
+        setText('prId', orderId);
         setText('prName', data.name || "");
+        
+        const po = data.postOffice || data.po || "";
+        setText('prAddr', data.address + (po ? ", " + po : ""));
+        
+        setText('prCity', data.city || "");
+        setText('prState', data.state || "");
+        setText('prPin', data.pin || data.pincode || "");
 
-        // Full address — compact for 58mm
-        const po   = data.po || data.postOffice || "";
-        const addr = [
-            data.address,
-            po,
-            [data.city, data.state].filter(Boolean).join(", ") + (data.pin || data.pincode ? " — " + (data.pin || data.pincode) : "")
-        ].filter(Boolean).join(", ");
-        setText('prFullAddr', addr);
-
-        const lm    = data.lm || data.landmark || "";
-        const lmEl  = document.getElementById('prLandmarkLine');
-        if (lm && lm !== "N/A") { lmEl.innerText = "🏠 " + lm; lmEl.style.display = "block"; }
-        else                    { lmEl.style.display = "none"; }
-
-        // MOBILE
-        setText('prMob', data.mob || data.mobile || "");
-        const alt   = data.altMob || data.altMobile || "";
-        const altEl = document.getElementById('prAltLine');
-        if (alt && alt !== "N/A") { setText('prAltMob', alt); altEl.style.display = "block"; }
-        else                      { altEl.style.display = "none"; }
-
-        // COURIER SECTION
-        const courierEl = document.getElementById('prCourierSection');
-        if (track && track[1] && track[1] !== "N/A") {
-            setText('prCourier', track[1]);
-            setText('prTrackId', track[2] || "—");
-            courierEl.style.display = "block";
+        const lm = data.landmark || data.lm || "";
+        if (lm && lm !== "N/A") {
+            setText('prLandmark', lm);
+            document.getElementById('prLandmarkLine').style.display = 'block';
         } else {
-            courierEl.style.display = "none";
+            document.getElementById('prLandmarkLine').style.display = 'none';
         }
 
-        // QR CODE
+        setText('prMob', data.mobile || data.mob || "");
+
+        const alt = data.altMobile || data.altMob || "";
+        if (alt && alt !== "N/A") {
+            setText('prAltMob', alt);
+            document.getElementById('prAltLine').style.display = 'block';
+        } else {
+            document.getElementById('prAltLine').style.display = 'none';
+        }
+
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), {
-            text:         orderId,
-            width:        90,
-            height:       90,
+            text: orderId,
+            width: 100,
+            height: 100,
             correctLevel: QRCode.CorrectLevel.H
         });
 
         setTimeout(() => window.print(), 800);
     }
 
-    // ─── UTILS ────────────────────────────────────────────────────────────
     function setText(id, val) { const el = document.getElementById(id); if(el) el.innerText = val || ""; }
 
     function setImgSrc(id, url) {
@@ -589,29 +506,14 @@
         el.src = url && url.length > 10 ? url : "";
     }
 
-    function escHtml(s) {
-        return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-    }
-
-    function formatDate(d) {
-        if (!d) return "";
-        return new Date(d).toLocaleDateString("en-IN", { day:'numeric', month:'short', year:'numeric' });
-    }
-
-    function openImgFull(src) {
-        if (!src) return;
-        document.getElementById('imgFull').src = src;
-        document.getElementById('imgModal').classList.replace('hidden', 'flex');
-    }
+    function escHtml(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    function formatDate(d) { if (!d) return ""; return new Date(d).toLocaleDateString("en-IN", { day:'numeric', month:'short', year:'numeric' }); }
+    function openImgFull(src) { if (!src) return; document.getElementById('imgFull').src = src; document.getElementById('imgModal').classList.replace('hidden', 'flex'); }
     function closeImgFull()  { document.getElementById('imgModal').classList.replace('flex', 'hidden'); }
     function closeModals()   { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
-    function showLoader(msg) {
-        setText('loaderMsg', msg || "Loading...");
-        document.getElementById('globalLoader').classList.replace('hidden', 'flex');
-    }
+    function showLoader(msg) { setText('loaderMsg', msg || "Loading..."); document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
     function hideLoader()    { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
 
-    // ─── INIT ─────────────────────────────────────────────────────────────
     window.onload = refreshData;
 </script>
 </body>
