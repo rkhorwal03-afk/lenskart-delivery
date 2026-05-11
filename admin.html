@@ -9,220 +9,209 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f0f2f5; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f8fafc; }
         
-        /* DATA TABLE STYLING */
         .data-table { width: 100%; border-collapse: collapse; background: #fff; }
-        .data-table th { background: #e2e8f0; color: #475569; font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 12px; border: 1px solid #cbd5e1; }
-        .data-table td { padding: 10px 12px; font-size: 13px; border: 1px solid #e2e8f0; vertical-align: middle; }
-        .data-table tr:nth-child(even) { background-color: #f8fafc; }
-        .data-table tr:hover { background-color: #f1f5f9 !important; }
+        .data-table th { background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 12px; border-bottom: 2px solid #e2e8f0; }
+        .data-table td { padding: 12px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+        .data-table tr:hover { background-color: #f8fafc !important; }
 
-        /* ANALYTICAL BADGES */
-        .badge { display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 900; border-radius: 4px; border: 1px solid transparent; text-transform: uppercase; }
-        .badge-Created   { background: #e0f2fe; color: #0369a1; border-color: #7dd3fc; }
-        .badge-Received  { background: #fef9c3; color: #854d0e; border-color: #fde047; }
-        .badge-Packed    { background: #f3e8ff; color: #6b21a8; border-color: #d8b4fe; }
-        .badge-Dispatch  { background: #dcfce7; color: #166534; border-color: #86efac; }
-        .badge-Delivered { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
-        .badge-TAT-BREACH { background: #fee2e2; color: #991b1b; border-color: #fca5a5; animation: pulse 2s infinite; }
+        .badge { display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 900; border-radius: 4px; text-transform: uppercase; border: 1px solid transparent; }
+        .badge-Created   { background: #eff6ff; color: #1d4ed8; border-color: #dbeafe; }
+        .badge-Dispatch  { background: #ecfdf5; color: #047857; border-color: #d1fae5; }
+        .badge-Delivered { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+        .badge-BREACH    { background: #fff1f2; color: #be123c; border-color: #fecdd3; animation: blink 1.5s infinite; }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* PRINT SETTINGS */
+        /* PRINT: Restore Beautified Format */
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
-            #printArea { display: block !important; width: 54mm; color: #000; background: #fff; padding: 2mm; }
+            #printArea { display: block !important; width: 54mm; color: #000; background: #fff; padding: 1mm; font-family: Arial, sans-serif !important; }
             @page { margin: 0; size: 58mm auto; }
         }
     </style>
 </head>
-<body class="text-slate-900">
+<body class="text-slate-800">
 
-<nav class="bg-slate-800 text-white px-4 py-3 border-b-4 border-blue-600">
+<nav class="bg-slate-900 text-white px-4 py-3 border-b-4 border-blue-600">
     <div class="max-w-[1400px] mx-auto flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <span class="font-black text-lg tracking-tighter">DATA CENTER</span>
-            <div class="h-6 w-px bg-slate-600"></div>
-            <span class="text-xs font-bold text-slate-400">LENSKART PALI · BACK-OFFICE</span>
+        <div class="flex items-center gap-3">
+            <span class="font-black text-lg tracking-tighter">DATA ANALYSIS</span>
+            <span class="text-[10px] bg-blue-600 px-2 py-0.5 rounded font-bold">LENSKART PALI</span>
         </div>
         <div class="flex gap-2">
-            <button onclick="generateEOD()" class="bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded font-black text-[10px] uppercase border border-white/20">
-                <i class="fa-solid fa-envelope mr-1"></i> Send EOD
-            </button>
-            <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 px-4 py-1.5 rounded font-black text-[10px] uppercase shadow-lg">
-                <i class="fa-solid fa-rotate mr-1"></i> Reload
-            </button>
+            <button onclick="generateEOD()" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded font-black text-[10px] uppercase transition">EOD Report</button>
+            <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded font-black text-[10px] uppercase shadow-lg transition">Refresh</button>
         </div>
     </div>
 </nav>
 
 <div class="max-w-[1400px] mx-auto p-4 space-y-4">
     
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div class="bg-white p-4 border-l-4 border-slate-400 shadow-sm">
-            <p class="text-[10px] font-black text-slate-400 uppercase">Total Orders</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase">Total Load</p>
             <h3 id="stat-total" class="text-2xl font-black">0</h3>
         </div>
-        <div class="bg-white p-4 border-l-4 border-blue-500 shadow-sm">
-            <p class="text-[10px] font-black text-blue-500 uppercase">Created</p>
-            <h3 id="stat-created" class="text-2xl font-black">0</h3>
+        <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-black text-blue-500 uppercase">New (Created)</p>
+            <h3 id="stat-created" class="text-2xl font-black text-blue-600">0</h3>
         </div>
-        <div class="bg-white p-4 border-l-4 border-green-500 shadow-sm">
+        <div class="bg-white p-4 rounded-lg border-l-4 border-l-rose-500 shadow-sm">
+            <p class="text-[10px] font-black text-rose-500 uppercase">TAT Breach (>3 Days)</p>
+            <h3 id="stat-breach" class="text-2xl font-black text-rose-600">0</h3>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
             <p class="text-[10px] font-black text-green-500 uppercase">In Transit</p>
-            <h3 id="stat-dispatch" class="text-2xl font-black">0</h3>
-        </div>
-        <div class="bg-white p-4 border-l-4 border-orange-500 shadow-sm">
-            <p class="text-[10px] font-black text-orange-500 uppercase">Pending > 3 Days</p>
-            <h3 id="stat-breach" class="text-2xl font-black text-orange-600">0</h3>
-        </div>
-        <div class="hidden md:block bg-white p-4 border-l-4 border-slate-800 shadow-sm">
-            <p class="text-[10px] font-black text-slate-800 uppercase">System Status</p>
-            <h3 class="text-xs font-black text-green-600 mt-2"><i class="fa-solid fa-circle text-[8px] animate-pulse"></i> CLOUD ACTIVE</h3>
+            <h3 id="stat-dispatch" class="text-2xl font-black text-green-600">0</h3>
         </div>
     </div>
 
-    <div class="bg-slate-700 p-3 rounded shadow-inner flex flex-wrap gap-4 items-center">
-        <div class="relative flex-1 min-w-[200px]">
-            <input id="searchBox" oninput="renderTable()" type="text" placeholder="Filter by ID, Name or Mobile..." 
-                class="w-full bg-slate-800 border border-slate-600 text-white px-4 py-2 text-xs font-bold rounded focus:border-blue-400 outline-none">
+    <div class="bg-slate-800 p-3 rounded-lg flex flex-wrap gap-3 items-center">
+        <div class="flex-1 min-w-[200px]">
+            <input id="searchBox" oninput="renderTable()" type="text" placeholder="Search ID or Name..." 
+                class="w-full bg-slate-700 border-none text-white px-4 py-2 text-xs font-bold rounded outline-none focus:ring-2 focus:ring-blue-500">
         </div>
-        <select id="statusFilter" onchange="renderTable()" class="bg-slate-800 border border-slate-600 text-white px-3 py-2 text-xs font-bold rounded outline-none">
+        <button id="breachToggle" onclick="toggleBreachFilter()" class="bg-slate-700 text-slate-400 hover:bg-rose-600 hover:text-white px-4 py-2 text-[10px] font-black uppercase rounded transition">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Show Only Breaches
+        </button>
+        <select id="statusFilter" onchange="renderTable()" class="bg-slate-700 text-white px-3 py-2 text-xs font-bold rounded border-none outline-none">
             <option value="">All Statuses</option>
             <option value="Created">Created</option>
-            <option value="Received">Received</option>
-            <option value="Packed">Packed</option>
             <option value="Dispatch">Dispatch</option>
             <option value="Delivered">Delivered</option>
         </select>
-        <button onclick="exportToCSV()" class="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 text-[10px] font-black uppercase rounded">
-            <i class="fa-solid fa-file-csv mr-1"></i> Export Data
-        </button>
     </div>
 
-    <div class="bg-white border border-slate-300 shadow-xl overflow-x-auto">
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Order Date</th>
+                    <th>Entry Date</th>
                     <th>Order ID</th>
                     <th>Customer Name</th>
-                    <th>Location (City)</th>
-                    <th>Current Status</th>
-                    <th class="text-center">Analysis & Actions</th>
+                    <th>Status</th>
+                    <th class="text-center">Action</th>
                 </tr>
             </thead>
-            <tbody id="masterTableBody">
-                </tbody>
+            <tbody id="masterTableBody"></tbody>
         </table>
     </div>
 </div>
 
-<div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 bg-slate-900/80">
-    <div class="bg-white w-full max-w-2xl border-t-8 border-blue-600 shadow-2xl p-6">
-        <div class="flex justify-between border-b pb-4 mb-4">
-            <div>
-                <h3 id="v_id" class="text-xl font-black text-slate-800"></h3>
-                <p id="v_date_full" class="text-[10px] font-bold text-slate-400 uppercase mt-1"></p>
-            </div>
-            <button onclick="closeModals()" class="text-slate-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-square-xmark"></i></button>
+<div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden">
+        <div class="p-6 border-b flex justify-between items-center">
+            <h3 id="v_id" class="text-xl font-black text-blue-600"></h3>
+            <button onclick="closeModals()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-4">
-                <div class="bg-slate-50 p-4 border">
-                    <p class="text-[9px] font-black text-slate-400 uppercase">Customer Profile</p>
-                    <p id="v_name" class="font-black text-md text-blue-700"></p>
-                    <p id="v_mob" class="text-xs font-bold mt-1"></p>
-                    <p id="v_addr" class="text-[11px] font-medium text-slate-600 mt-2 leading-tight"></p>
-                </div>
+        <div class="p-6 space-y-6">
+            <div class="bg-slate-50 p-4 rounded-xl border">
+                <p id="v_name" class="font-black text-lg uppercase"></p>
+                <p id="v_addr" class="text-xs font-medium text-slate-500 mt-1 leading-relaxed"></p>
+                <p id="v_mob" class="text-sm font-bold text-blue-600 mt-2"></p>
             </div>
-            <div class="space-y-4">
-                <div id="parcelPhotosContainer" class="hidden space-y-2">
-                    <p class="text-[9px] font-black text-slate-400 uppercase">Verification Files</p>
-                    <div class="flex flex-col gap-2">
-                        <a id="v_link_label" href="#" target="_blank" class="text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-file-arrow-up mr-2"></i>View Tracking Label</a>
-                        <a id="v_link_parcel1" href="#" target="_blank" class="text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box mr-2"></i>View Parcel Pic 1</a>
-                        <a id="v_link_parcel2" href="#" target="_blank" class="text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box-open mr-2"></i>View Parcel Pic 2</a>
-                    </div>
-                </div>
-                <button id="modalPrintBtn" class="w-full bg-slate-800 text-white font-black py-4 text-xs uppercase hover:bg-black transition">
-                    <i class="fa-solid fa-print mr-2"></i> Execute Print Slip
-                </button>
+            <div id="parcelPhotosContainer" class="hidden grid grid-cols-3 gap-3">
+                <a id="v_link_label" href="#" target="_blank" class="bg-slate-100 p-3 rounded-lg text-center text-[9px] font-black uppercase border border-slate-200">Open Label</a>
+                <a id="v_link_parcel1" href="#" target="_blank" class="bg-slate-100 p-3 rounded-lg text-center text-[9px] font-black uppercase border border-slate-200">Open Pic 1</a>
+                <a id="v_link_parcel2" href="#" target="_blank" class="bg-slate-100 p-3 rounded-lg text-center text-[9px] font-black uppercase border border-slate-200">Open Pic 2</a>
             </div>
+            <button id="modalPrintBtn" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl uppercase text-xs">Execute Beautified Print</button>
         </div>
     </div>
 </div>
 
 <div id="printArea">
-    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
-        <p style="margin: 0; font-size: 10pt; font-weight: 900; text-transform: uppercase;">LENSKART</p>
+    <div style="text-align: center; border-bottom: 2.5px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
+        <p style="margin: 0; font-size: 10pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">LENSKART</p>
         <h1 style="margin: 0; font-size: 15pt; font-weight: 900; text-decoration: underline;">DELIVERY SLIP</h1>
     </div>
-    <div style="margin-bottom: 10px; font-size: 11pt; line-height: 1.4;">
+    <div style="margin-bottom: 12px; font-size: 11pt; line-height: 1.4;">
         <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 10pt;">TO,</p>
-        <p style="margin: 4px 0 0 0;">Customer Name:- <span id="prName" style="font-weight: 900;"></span></p>
-        <p style="margin: 2px 0 0 0;">Address: <span id="prAddr"></span></p>
-        <p style="margin: 2px 0 0 0;">City: <span id="prCity"></span></p>
-        <p style="margin: 4px 0 0 0; font-weight: 900;">Contact: <span id="prMob"></span></p>
+        <p style="margin: 4px 0 0 0;"><b>Customer Name:-</b> <span id="prName" style="text-transform: uppercase; font-weight:900;"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>Shipping Address:-</b> <span id="prAddr"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>City:-</b> <span id="prCity"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>State:-</b> <span id="prState"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>Pincode:-</b> <span id="prPin"></span></p>
+        <p style="margin: 2px 0 0 0;" id="prLandmarkLine"><b>Landmark:-</b> <span id="prLandmark"></span></p>
+        <div style="margin-top: 6px; border-top: 1px dashed #000; padding-top: 4px;">
+            <p style="margin: 0;"><b>Contact number:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
+            <p style="margin: 2px 0 0 0;" id="prAltLine"><b>Alt Number:-</b> <span id="prAltMob"></span></p>
+        </div>
+    </div>
+    <div style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 12px; font-size: 10pt; line-height: 1.3;">
+        <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 9pt;">FROM,</p>
+        <p style="margin: 4px 0 0 0; font-weight: 900; font-size: 11pt;">LENSKART PALI</p>
+        <p style="margin: 2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Raj. 306401</p>
+        <p style="margin: 4px 0 0 0;"><b>Contact number:-</b> 8290776551</p>
     </div>
     <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px;">
         <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 6px;"></div>
-        <p style="margin: 0; font-weight: 900; font-size: 12pt;">ID: <span id="prId"></span></p>
+        <p style="margin: 0; font-weight: 900; font-size: 14pt; font-family: 'Courier New', Courier, monospace;">Order id:- <span id="prId"></span></p>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNWlJJBlKGzjIpkj49a7NK0O0umYK5gnRGiNFfMJgW15FFXWwvIMpBMo43E3On7bhptQ/exec";
     let allOrders = [];
+    let showBreachOnly = false;
 
     async function refreshData() {
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
             const result = await res.json();
             if (result.status === "success") { allOrders = result.orders; renderTable(); }
-        } catch (e) { alert("Fetch Error"); }
+        } catch (e) { alert("Load Error"); }
+    }
+
+    function toggleBreachFilter() {
+        showBreachOnly = !showBreachOnly;
+        document.getElementById('breachToggle').className = showBreachOnly 
+            ? "bg-rose-600 text-white px-4 py-2 text-[10px] font-black uppercase rounded" 
+            : "bg-slate-700 text-slate-400 px-4 py-2 text-[10px] font-black uppercase rounded";
+        renderTable();
     }
 
     function renderTable() {
         const tbody = document.getElementById('masterTableBody');
         const q = document.getElementById('searchBox').value.toUpperCase().trim();
         const f = document.getElementById('statusFilter').value;
-        
-        const filtered = allOrders.filter(o => 
-            (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q) || o[2].includes(q)) &&
-            (f === "" || o[4] === f)
-        ).reverse();
-
-        // Analytical Calculations
-        let breachCount = 0;
         const now = new Date();
 
+        // Stats Calculation
+        let breachCount = 0;
+        allOrders.forEach(o => {
+            const age = Math.floor((now - new Date(o[3])) / 864e5);
+            if ((o[4] === 'Created' || o[4] === 'Received') && age >= 3) breachCount++;
+        });
         document.getElementById('stat-total').innerText = allOrders.length;
         document.getElementById('stat-created').innerText = allOrders.filter(o => o[4] === 'Created').length;
         document.getElementById('stat-dispatch').innerText = allOrders.filter(o => o[4] === 'Dispatch').length;
+        document.getElementById('stat-breach').innerText = breachCount;
+
+        const filtered = allOrders.filter(o => {
+            const age = Math.floor((now - new Date(o[3])) / 864e5);
+            const isBreach = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
+            const matchesSearch = (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q));
+            const matchesStatus = (f === "" || o[4] === f);
+            const matchesBreach = showBreachOnly ? isBreach : true;
+            return matchesSearch && matchesStatus && matchesBreach;
+        }).reverse();
 
         tbody.innerHTML = filtered.map(o => {
-            const orderDate = new Date(o[3]);
-            const diffDays = Math.floor((now - orderDate) / (1000 * 60 * 60 * 24));
-            const isBreach = (o[4] === 'Created' || o[4] === 'Received') && diffDays >= 3;
-            if(isBreach) breachCount++;
-
+            const age = Math.floor((now - new Date(o[3])) / 864e5);
+            const isBreach = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
             return `
             <tr>
-                <td class="font-bold text-slate-500 text-[11px]">${orderDate.toLocaleDateString('en-IN')}</td>
-                <td class="font-black text-blue-700">${o[0]}</td>
-                <td class="uppercase font-bold">${o[1]}</td>
-                <td class="text-slate-600">${o[7] || 'Pali'}</td>
-                <td><span class="badge badge-${o[4]}">${o[4]}</span> ${isBreach ? '<span class="badge badge-TAT-BREACH">DELAY</span>' : ''}</td>
-                <td class="text-center">
-                    <button onclick="viewOrder('${o[0]}')" class="text-blue-600 font-black hover:bg-blue-600 hover:text-white px-3 py-1 rounded transition border border-blue-600 text-[10px]">ANALYSE</button>
-                </td>
+                <td class="text-[11px] font-bold text-slate-400">${new Date(o[3]).toLocaleDateString('en-IN')}</td>
+                <td class="font-black text-blue-600">${o[0]}</td>
+                <td class="font-bold uppercase">${o[1]}</td>
+                <td><span class="badge badge-${o[4]}">${o[4]}</span> ${isBreach ? '<span class="badge badge-BREACH">DELAY</span>' : ''}</td>
+                <td class="text-center"><button onclick="viewOrder('${o[0]}')" class="bg-slate-100 hover:bg-blue-600 hover:text-white px-3 py-1 rounded text-[10px] font-black uppercase transition">Analyse</button></td>
             </tr>`;
         }).join('');
-
-        document.getElementById('stat-breach').innerText = breachCount;
     }
 
     async function viewOrder(id) {
@@ -234,9 +223,8 @@
 
             document.getElementById('v_id').innerText = d[0];
             document.getElementById('v_name').innerText = d[1];
-            document.getElementById('v_mob').innerText = "📞 " + d[3];
-            document.getElementById('v_addr').innerText = d[2] + ", " + d[6] + ", " + d[7] + " - " + d[5];
-            document.getElementById('v_date_full').innerText = "Logged: " + new Date(d[10]).toLocaleString();
+            document.getElementById('v_addr').innerText = d[2];
+            document.getElementById('v_mob').innerText = "Primary: " + d[3];
             
             setupLink('v_link_label', t ? t[6] : "");
             setupLink('v_link_parcel1', t ? t[7] : "");
@@ -245,7 +233,7 @@
             
             document.getElementById('modalPrintBtn').onclick = () => triggerPrint(id, d);
             document.getElementById('viewModal').classList.replace('hidden', 'flex');
-        } catch (e) { alert("Drill-down failed."); }
+        } catch (e) { alert("Error"); }
     }
 
     function setupLink(id, url) {
@@ -259,30 +247,18 @@
         document.getElementById('prName').innerText = d[1];
         document.getElementById('prAddr').innerText = d[2];
         document.getElementById('prCity').innerText = d[7] || "";
+        document.getElementById('prState').innerText = d[8] || "";
+        document.getElementById('prPin').innerText = d[5] || "";
         document.getElementById('prMob').innerText = d[3] || "";
+        const lm = d[9];
+        if (lm && lm !== "N/A") { document.getElementById('prLandmark').innerText = lm; document.getElementById('prLandmarkLine').style.display = "block"; }
+        else { document.getElementById('prLandmarkLine').style.display = "none"; }
+        const alt = d[4];
+        if (alt && alt !== "N/A") { document.getElementById('prAltMob').innerText = alt; document.getElementById('prAltLine').style.display = "block"; }
+        else { document.getElementById('prAltLine').style.display = "none"; }
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: orderId, width: 100, height: 100 });
         setTimeout(() => window.print(), 800);
-    }
-
-    async function generateEOD() {
-        if (!confirm("Send Analytics to rkhorwall@outlook.com?")) return;
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) });
-            alert("Analysis Sent!");
-        } catch (e) { alert("Failed."); }
-    }
-
-    function exportToCSV() {
-        let csv = "Date,Order ID,Customer,Mobile,Status\n";
-        allOrders.forEach(o => {
-            csv += `${new Date(o[3]).toLocaleDateString()},${o[0]},${o[1]},${o[2]},${o[4]}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `pali_logistics_${new Date().toLocaleDateString()}.csv`;
-        a.click();
     }
 
     function closeModals() { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
