@@ -3,167 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin | Lenskart Pali</title>
+    <title>Lenskart Pali | Master Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* ── PRINT: 58mm Thermal Slip Optimization ── */
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        
+        /* ── ADVANCE UI ELEMENTS ── */
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .gradient-blue { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
+        .gradient-green { background: linear-gradient(135deg, #15803d 0%, #22c55e 100%); }
+        .gradient-purple { background: linear-gradient(135deg, #6b21a8 0%, #a855f7 100%); }
+        .gradient-orange { background: linear-gradient(135deg, #c2410c 0%, #f97316 100%); }
+
+        .status-badge { padding: 4px 10px; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .Created { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .Dispatch { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .Delivered { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
-            #printArea {
-                display: block !important;
-                visibility: visible !important;
-                position: absolute; left: 0; top: 0;
-                width: 56mm;
-                padding: 1mm;
-                font-family: 'Arial', sans-serif !important;
-                font-size: 13px !important;
-                color: #000;
-                background: #fff;
-                line-height: 1.4 !important;
-            }
-            #qrcode canvas { display: none !important; }
-            #qrcode img   { display: block !important; margin: 0 auto; width: 95px; height: 90px; }
+            #printArea { display: block !important; width: 54mm; margin: 0; padding: 2mm; color: #000; background: #fff; }
             @page { margin: 0; size: 58mm auto; }
         }
-        .modal-blur { backdrop-filter: blur(8px); background: rgba(15,23,42,0.65); }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-
-        .badge-created   { background:#dbeafe; color:#1d4ed8; }
-        .badge-received  { background:#fef9c3; color:#a16207; }
-        .badge-packed    { background:#ede9fe; color:#6d28d9; }
-        .badge-dispatch  { background:#dcfce7; color:#15803d; }
-        .badge-delivered { background:#d1fae5; color:#065f46; }
-        .badge-breach    { background:#fee2e2; color:#b91c1c; }
-
-        #masterTableBody tr:hover { background: #f8fafc; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
+<body class="min-h-screen text-slate-800">
 
-<nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-14">
-        <div class="flex items-center gap-4">
-            <span class="font-black uppercase tracking-widest text-xs text-blue-400">Lenskart · Pali Store</span>
-            <div class="flex gap-1">
-                <a href="index.html" class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-50">Store</a>
-                <a href="rider.html" class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-50">Rider</a>
-                <a href="admin.html" class="px-3 py-1.5 text-[10px] font-bold uppercase bg-purple-600 rounded-lg">Master</a>
+<nav class="sticky top-0 z-[100] bg-slate-900 text-white shadow-xl px-4 py-3">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-glasses text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-xs font-black uppercase tracking-tighter">Pali Admin</h1>
+                <p class="text-[9px] font-bold text-blue-400 opacity-80 uppercase">Lenskart Delivery System</p>
             </div>
         </div>
-        <div class="flex items-center gap-2">
-            <button onclick="generateEOD()" class="bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1.5 transition-all">
-                <i class="fa-solid fa-paper-plane"></i> EOD
+        <div class="flex gap-2">
+            <button onclick="generateEOD()" class="bg-green-600/20 hover:bg-green-600 text-green-400 hover:text-white border border-green-600/30 px-4 py-2 rounded-xl text-[10px] font-black transition-all">
+                <i class="fa-solid fa-paper-plane mr-1"></i> EOD
             </button>
-            <button onclick="refreshData()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1.5 transition-all">
+            <button onclick="refreshData()" class="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl text-xs transition-all">
                 <i class="fa-solid fa-rotate-right"></i>
             </button>
         </div>
     </div>
 </nav>
 
-<main class="p-4 lg:p-6 max-w-7xl mx-auto">
-    <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
+<div class="max-w-7xl mx-auto p-4 lg:p-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="gradient-blue p-5 rounded-[2rem] text-white shadow-xl shadow-blue-500/20">
+            <p class="text-[10px] font-black uppercase opacity-70">Total Orders</p>
+            <h3 id="stat-total" class="text-3xl font-black">0</h3>
+        </div>
+        <div class="gradient-purple p-5 rounded-[2rem] text-white shadow-xl shadow-purple-500/20">
+            <p class="text-[10px] font-black uppercase opacity-70">Created</p>
+            <h3 id="stat-created" class="text-3xl font-black">0</h3>
+        </div>
+        <div class="gradient-orange p-5 rounded-[2rem] text-white shadow-xl shadow-orange-500/20">
+            <p class="text-[10px] font-black uppercase opacity-70">In Transit</p>
+            <h3 id="stat-dispatch" class="text-3xl font-black">0</h3>
+        </div>
+        <div class="gradient-green p-5 rounded-[2rem] text-white shadow-xl shadow-green-500/20">
+            <p class="text-[10px] font-black uppercase opacity-70">Completed</p>
+            <h3 id="stat-delivered" class="text-3xl font-black">0</h3>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+        <div class="p-6 border-b border-slate-50 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-4">
+            <h2 class="text-sm font-black uppercase text-slate-400">Orders Database</h2>
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input id="searchBox" oninput="renderTable()" type="text" placeholder="Search by ID or Name..." 
+                    class="bg-white border border-slate-200 pl-10 pr-4 py-2.5 rounded-2xl text-xs font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 w-full md:w-64 transition-all">
+            </div>
+        </div>
+        
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                        <th class="p-4 text-[9px] font-black uppercase text-slate-400">Order</th>
-                        <th class="p-4 text-[9px] font-black uppercase text-slate-400">Status</th>
-                        <th class="p-4 text-[9px] font-black uppercase text-slate-400 text-center">View</th>
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">
+                        <th class="px-6 py-4">Order Details</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-center">Action</th>
                     </tr>
                 </thead>
-                <tbody id="masterTableBody" class="divide-y divide-slate-50"></tbody>
+                <tbody id="masterTableBody" class="divide-y divide-slate-50">
+                    </tbody>
             </table>
         </div>
     </div>
-</main>
+</div>
 
-<div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 modal-blur">
-    <div class="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden p-6 space-y-5">
-        <div class="flex justify-between items-center">
-            <h3 id="v_id" class="text-base font-black text-blue-600 font-mono"></h3>
-            <button onclick="closeModals()" class="text-slate-300 hover:text-slate-900 transition"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
-        </div>
-        
-        <div class="p-4 bg-slate-50 rounded-2xl">
-            <p id="v_name" class="font-black text-base uppercase"></p>
-            <p id="v_addr" class="text-xs font-bold leading-relaxed"></p>
-        </div>
+<div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 backdrop-blur-md bg-slate-900/40">
+    <div class="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+        <div class="p-8 space-y-6">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 id="v_id" class="text-2xl font-black text-blue-600 font-mono tracking-tighter"></h3>
+                    <p class="text-[10px] font-black uppercase text-slate-400 mt-1">Order Information</p>
+                </div>
+                <button onclick="closeModals()" class="bg-slate-100 hover:bg-red-50 hover:text-red-500 text-slate-400 p-3 rounded-2xl transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
 
-        <div id="parcelPhotosContainer" class="hidden">
-            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Attached Documents</p>
-            <div class="grid grid-cols-3 gap-2">
-                <a id="v_link_label" href="#" target="_blank" class="hidden py-3 bg-blue-50 text-blue-700 text-center rounded-xl font-black text-[9px] uppercase border border-blue-200 transition hover:bg-blue-100">
-                    <i class="fa-solid fa-camera mb-1 text-lg block"></i> Label
-                </a>
-                <a id="v_link_parcel1" href="#" target="_blank" class="hidden py-3 bg-blue-50 text-blue-700 text-center rounded-xl font-black text-[9px] uppercase border border-blue-200 transition hover:bg-blue-100">
-                    <i class="fa-solid fa-box mb-1 text-lg block"></i> Pic 1
-                </a>
-                <a id="v_link_parcel2" href="#" target="_blank" class="hidden py-3 bg-blue-50 text-blue-700 text-center rounded-xl font-black text-[9px] uppercase border border-blue-200 transition hover:bg-blue-100">
-                    <i class="fa-solid fa-box-open mb-1 text-lg block"></i> Pic 2
-                </a>
+            <div class="space-y-4">
+                <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                    <p id="v_name" class="text-lg font-black uppercase text-slate-800"></p>
+                    <p id="v_addr" class="text-xs font-bold text-slate-500 mt-2 leading-relaxed"></p>
+                </div>
+
+                <div id="parcelPhotosContainer" class="hidden grid grid-cols-3 gap-3">
+                    <a id="v_link_label" href="#" target="_blank" class="bg-blue-600 text-white p-4 rounded-2xl text-center shadow-lg shadow-blue-500/20 transition hover:-translate-y-1">
+                        <i class="fa-solid fa-barcode block mb-1"></i><span class="text-[9px] font-black uppercase">Label</span>
+                    </a>
+                    <a id="v_link_parcel1" href="#" target="_blank" class="bg-slate-800 text-white p-4 rounded-2xl text-center shadow-lg shadow-slate-800/20 transition hover:-translate-y-1">
+                        <i class="fa-solid fa-box block mb-1"></i><span class="text-[9px] font-black uppercase">Pic 1</span>
+                    </a>
+                    <a id="v_link_parcel2" href="#" target="_blank" class="bg-slate-800 text-white p-4 rounded-2xl text-center shadow-lg shadow-slate-800/20 transition hover:-translate-y-1">
+                        <i class="fa-solid fa-box-open block mb-1"></i><span class="text-[9px] font-black uppercase">Pic 2</span>
+                    </a>
+                </div>
+
+                <button id="modalPrintBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[2rem] uppercase text-xs shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-print"></i> Reprint Thermal Slip
+                </button>
             </div>
         </div>
-
-        <button id="modalPrintBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl uppercase text-xs shadow-lg transition">Reprint Delivery Slip</button>
     </div>
 </div>
 
-<div id="globalLoader" class="fixed inset-0 z-[600] hidden items-center justify-center p-4 modal-blur">
-    <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4">
-        <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-        <p class="text-[10px] font-black uppercase tracking-widest">Updating data...</p>
+<div id="printArea">
+    <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
+        <p style="margin: 0; font-size: 10pt; font-weight: 900; text-transform: uppercase;">LENSKART</p>
+        <h1 style="margin: 0; font-size: 15pt; font-weight: 900; text-decoration: underline;">DELIVERY SLIP</h1>
     </div>
-</div>
-
-<div id="printArea" style="width: 54mm; margin: 0 auto; color: #000; background: #fff;">
-    <div style="text-align: center; border-bottom: 2.5px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
-        <p style="margin: 0; font-size: 10pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">LENSKART</p>
-        <h1 style="margin: 0; font-size: 16pt; font-weight: 900; line-height: 1.1; text-decoration: underline;">DELIVERY SLIP</h1>
-    </div>
-
-    <div style="margin-bottom: 12px; font-size: 11pt; line-height: 1.4;">
+    <div style="margin-bottom: 10px; font-size: 11pt; line-height: 1.4;">
         <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 10pt;">TO,</p>
-        <p style="margin: 4px 0 0 0;"><b>Customer Name:-</b> <span id="prName" style="text-transform: uppercase;"></span></p>
-        <p style="margin: 2px 0 0 0;"><b>Address:-</b> <span id="prAddr"></span></p>
-        <p style="margin: 2px 0 0 0;"><b>City:-</b> <span id="prCity"></span></p>
-        <p style="margin: 2px 0 0 0;"><b>State:-</b> <span id="prState"></span></p>
-        <p style="margin: 2px 0 0 0;"><b>Pincode:-</b> <span id="prPin"></span></p>
-        <p style="margin: 2px 0 0 0;" id="prLandmarkLine"><b>Landmark:-</b> <span id="prLandmark"></span></p>
-        
-        <div style="margin-top: 6px; border-top: 1px dashed #000; padding-top: 4px;">
-            <p style="margin: 0;"><b>Contact:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
-            <p style="margin: 2px 0 0 0;" id="prAltLine"><b>Alt Number:-</b> <span id="prAltMob"></span></p>
-        </div>
+        <p style="margin: 4px 0 0 0;">Customer Name:- <span id="prName" style="text-transform: uppercase; font-weight: 900;"></span></p>
+        <p style="margin: 2px 0 0 0;">Address:- <span id="prAddr"></span></p>
+        <p style="margin: 2px 0 0 0;">City:- <span id="prCity"></span></p>
+        <p style="margin: 2px 0 0 0;">Pincode:- <span id="prPin"></span></p>
+        <p style="margin: 4px 0 0 0; font-weight: 900; font-size: 12pt;">Contact:- <span id="prMob"></span></p>
     </div>
-
-    <div style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 12px; font-size: 10pt; line-height: 1.3;">
-        <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 9pt;">FROM,</p>
-        <p style="margin: 4px 0 0 0; font-weight: 900; font-size: 11pt;">LENSKART PALI</p>
-        <p style="margin: 2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Raj. 306401</p>
-        <p style="margin: 4px 0 0 0;"><b>Contact:-</b> 8290776551</p>
+    <div style="border-top: 1px dashed #000; padding-top: 8px; margin-bottom: 10px; font-size: 9pt;">
+        <p style="margin: 0; font-weight: 900;">FROM: LENSKART PALI</p>
+        <p style="margin: 0;">Shop No 3 & 4, Ahinsa Complex, Pali</p>
+        <p style="margin: 0;">📞 8290776551</p>
     </div>
-
-    <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px;">
+    <div style="text-align: center; border-top: 2px solid #000; padding-top: 10px;">
         <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 6px;"></div>
-        <p style="margin: 0; font-weight: 900; font-size: 14pt; font-family: 'Courier New', Courier, monospace;">
-            Order id:- <span id="prId"></span>
-        </p>
+        <p style="margin: 0; font-weight: 900; font-size: 12pt;">ID: <span id="prId"></span></p>
     </div>
 </div>
 
 <script>
-    // ✅ NEW UPDATED EXEC URL
+    // ✅ PRODUCTION EXEC URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNWlJJBlKGzjIpkj49a7NK0O0umYK5gnRGiNFfMJgW15FFXWwvIMpBMo43E3On7bhptQ/exec";
-
     let allOrders = [];
 
     async function refreshData() {
-        document.getElementById('globalLoader').classList.replace('hidden', 'flex');
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
             const result = await res.json();
@@ -171,25 +179,41 @@
                 allOrders = result.orders; 
                 renderTable(); 
             }
-        } catch (e) { alert("Sync Error: Ensure Script is deployed correctly."); }
-        document.getElementById('globalLoader').classList.replace('flex', 'hidden');
+        } catch (e) { console.error("Sync Error"); }
     }
 
     function renderTable() {
         const tbody = document.getElementById('masterTableBody');
-        tbody.innerHTML = allOrders.reverse().map(order => `
-            <tr>
-                <td class="p-4">
-                    <p class="text-[10px] font-black text-blue-600">${order[0]}</p>
-                    <p class="text-[9px] font-bold uppercase">${order[1]}</p>
+        const q = document.getElementById('searchBox').value.toUpperCase().trim();
+        
+        const filtered = allOrders.filter(o => o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q)).reverse();
+
+        // Update Stats
+        document.getElementById('stat-total').innerText = allOrders.length;
+        document.getElementById('stat-created').innerText = allOrders.filter(o => o[4] === 'Created').length;
+        document.getElementById('stat-dispatch').innerText = allOrders.filter(o => o[4] === 'Dispatch').length;
+        document.getElementById('stat-delivered').innerText = allOrders.filter(o => o[4] === 'Delivered').length;
+
+        tbody.innerHTML = filtered.map(o => `
+            <tr class="hover:bg-blue-50/30 transition-colors">
+                <td class="px-6 py-5">
+                    <p class="text-xs font-black text-blue-600 font-mono">${o[0]}</p>
+                    <p class="text-[11px] font-bold text-slate-800 uppercase mt-1">${o[1]}</p>
+                    <p class="text-[9px] font-bold text-slate-400 mt-0.5">${o[3] ? new Date(o[3]).toLocaleDateString() : 'N/A'}</p>
                 </td>
-                <td class="p-4 font-bold uppercase text-[9px]">${order[4]}</td>
-                <td class="p-4 text-center"><button onclick="viewOrder('${order[0]}')" class="text-blue-500 text-lg transition hover:scale-110"><i class="fa-solid fa-eye"></i></button></td>
-            </tr>`).join('');
+                <td class="px-6 py-5">
+                    <span class="status-badge ${o[4]}">${o[4]}</span>
+                </td>
+                <td class="px-6 py-5 text-center">
+                    <button onclick="viewOrder('${o[0]}')" class="bg-slate-100 hover:bg-blue-600 hover:text-white text-blue-600 w-10 h-10 rounded-2xl transition-all shadow-sm">
+                        <i class="fa-solid fa-eye text-sm"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
     }
 
     async function viewOrder(id) {
-        document.getElementById('globalLoader').classList.replace('hidden', 'flex');
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
             const result = await res.json();
@@ -200,7 +224,6 @@
             document.getElementById('v_name').innerText = d[1];
             document.getElementById('v_addr').innerText = d[2];
             
-            // Setup clickable image links
             setupLink('v_link_label', t ? t[6] : "");
             setupLink('v_link_parcel1', t ? t[7] : "");
             setupLink('v_link_parcel2', t ? t[8] : "");
@@ -208,13 +231,12 @@
             
             document.getElementById('modalPrintBtn').onclick = () => { triggerPrint(id, d); };
             document.getElementById('viewModal').classList.replace('hidden', 'flex');
-        } catch (e) { alert("Order Fetch Error."); }
-        document.getElementById('globalLoader').classList.replace('flex', 'hidden');
+        } catch (e) { alert("Error loading order."); }
     }
 
     function setupLink(id, url) {
         const el = document.getElementById(id);
-        if (url && url.length > 10) { el.href = url; el.classList.replace('hidden', 'block'); }
+        if (url && url.length > 10) { el.href = url; el.classList.remove('hidden'); }
         else { el.classList.add('hidden'); }
     }
 
@@ -223,38 +245,20 @@
         document.getElementById('prName').innerText = d[1];
         document.getElementById('prAddr').innerText = d[2];
         document.getElementById('prCity').innerText = d[7] || "";
-        document.getElementById('prState').innerText = d[8] || "";
         document.getElementById('prPin').innerText = d[5] || "";
         document.getElementById('prMob').innerText = d[3] || "";
         
-        const lm = d[9];
-        if (lm && lm !== "N/A") { 
-            document.getElementById('prLandmark').innerText = lm; 
-            document.getElementById('prLandmarkLine').style.display = "block"; 
-        } else { 
-            document.getElementById('prLandmarkLine').style.display = "none"; 
-        }
-
-        const alt = d[4];
-        if (alt && alt !== "N/A") { 
-            document.getElementById('prAltMob').innerText = alt; 
-            document.getElementById('prAltLine').style.display = "block"; 
-        } else { 
-            document.getElementById('prAltLine').style.display = "none"; 
-        }
-
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: orderId, width: 100, height: 100 });
         setTimeout(() => window.print(), 800);
     }
 
     async function generateEOD() {
-        if (!confirm("Send EOD Report now?")) return;
+        if (!confirm("Send Report to rkhorwall@outlook.com?")) return;
         try {
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) });
-            const r = await res.json();
-            if(r.status === "success") alert("✅ EOD Report Sent to Outlook!");
-        } catch (e) { alert("EOD Failed. Check Backend permissions."); }
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) });
+            alert("✅ Sent!");
+        } catch (e) { alert("Failed."); }
     }
 
     function closeModals() { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
