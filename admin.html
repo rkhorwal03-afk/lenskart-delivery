@@ -7,268 +7,612 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <style>
+        /* ── PRINT: 58mm Thermal Slip ─────────────────────────── */
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
             #printArea {
-                display: block !important; visibility: visible !important; position: absolute;
-                left: 0; top: 0; width: 58mm; padding: 1mm;
-                font-family: 'Calibri', 'Trebuchet MS', sans-serif !important;
-                font-size: 16px !important; font-weight: 700 !important; color: #000 !important;
-                background: #ffffff !important; line-height: 1.1 !important;
+                display: block !important;
+                visibility: visible !important;
+                position: absolute; left: 0; top: 0;
+                width: 56mm;
+                padding: 2mm 1.5mm;
+                font-family: 'Arial Narrow', Arial, sans-serif;
+                font-size: 10pt;
+                color: #000;
+                background: #fff;
+                line-height: 1.25;
             }
             #qrcode canvas { display: none !important; }
-            #qrcode img { display: block !important; margin: 8px auto; width: 90px; height: 90px; }
-            @page { margin: 0; }
+            #qrcode img   { display: block !important; margin: 3px auto; width: 80px; height: 80px; }
+            @page { margin: 0; size: 58mm auto; }
         }
-        .modal-blur { backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.6); }
+        .modal-blur { backdrop-filter: blur(8px); background: rgba(15,23,42,0.65); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+        /* Status badge colors */
+        .badge-created   { background:#dbeafe; color:#1d4ed8; }
+        .badge-received  { background:#fef9c3; color:#a16207; }
+        .badge-packed    { background:#ede9fe; color:#6d28d9; }
+        .badge-dispatch  { background:#dcfce7; color:#15803d; }
+        .badge-delivered { background:#d1fae5; color:#065f46; }
+        .badge-breach    { background:#fee2e2; color:#b91c1c; }
+
+        .status-row-dispatch  { border-left:3px solid #16a34a; }
+        .status-row-delivered { border-left:3px solid #0d9488; }
+        .status-row-breach    { border-left:3px solid #dc2626; }
+
+        #masterTableBody tr { transition: background 0.15s; }
+        #masterTableBody tr:hover { background: #f8fafc; }
+
+        /* Image viewer */
+        .img-thumb { cursor:zoom-in; transition:transform 0.15s; }
+        .img-thumb:hover { transform:scale(1.05); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
 
-    <nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
-            <div class="flex items-center gap-4">
-                <span class="font-black uppercase tracking-tighter text-sm">Pali Master Admin</span>
-                <div class="flex h-full gap-2">
-                    <a href="index.html" class="px-3 py-2 text-[10px] font-bold uppercase opacity-60">Store</a>
-                    <a href="rider.html" class="px-3 py-2 text-[10px] font-bold uppercase opacity-60">Rider</a>
-                    <a href="admin.html" class="px-3 py-2 text-[10px] font-bold uppercase bg-purple-600 rounded-lg">Master</a>
-                </div>
+<!-- ── NAV ──────────────────────────────────────────────────────────────── -->
+<nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-14">
+        <div class="flex items-center gap-4">
+            <span class="font-black uppercase tracking-widest text-xs text-blue-400">Lenskart · Pali</span>
+            <div class="flex gap-1">
+                <a href="store.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-50">Store</a>
+                <a href="rider.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-50">Rider</a>
+                <a href="admin.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase bg-purple-600 rounded-lg">Master</a>
             </div>
-            <button onclick="generateEOD()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2">
-                <i class="fa-solid fa-paper-plane"></i> EOD Report
+        </div>
+        <div class="flex items-center gap-2">
+            <input id="searchBox" type="text" placeholder="Search ID / Name..."
+                oninput="filterTable(this.value)"
+                class="bg-slate-800 text-white border border-slate-700 text-[10px] font-bold px-3 py-1.5 rounded-xl outline-none focus:border-blue-500 w-44 transition">
+            <select id="statusFilter" onchange="filterTable(document.getElementById('searchBox').value)"
+                class="bg-slate-800 text-white border border-slate-700 text-[10px] font-bold px-2 py-1.5 rounded-xl outline-none">
+                <option value="">All Status</option>
+                <option value="Created">Created</option>
+                <option value="Received">Received</option>
+                <option value="Packed">Packed</option>
+                <option value="Dispatch">Dispatch</option>
+                <option value="Delivered">Delivered</option>
+            </select>
+            <button onclick="generateEOD()" class="bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-paper-plane"></i> EOD
+            </button>
+            <button onclick="refreshData()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-rotate-right"></i>
             </button>
         </div>
-    </nav>
+    </div>
+</nav>
 
-    <main class="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
-                <p class="text-[10px] font-black text-slate-400 uppercase">Total Orders</p>
-                <h2 id="stat-total" class="text-3xl font-black">0</h2>
-            </div>
-            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
-                <p class="text-[10px] font-black text-red-500 uppercase">TAT Breaches</p>
-                <h2 id="stat-breach" class="text-3xl font-black text-red-600">0</h2>
-            </div>
+<!-- ── STATS BAR ─────────────────────────────────────────────────────────── -->
+<div class="bg-white border-b border-slate-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex gap-3 overflow-x-auto scrollbar-hide">
+        <div class="shrink-0 text-center px-4">
+            <p class="text-[8px] font-black text-slate-400 uppercase">Total</p>
+            <h3 id="stat-total"     class="text-2xl font-black text-slate-800">0</h3>
         </div>
-
-        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden mt-6">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 border-b border-slate-100">
-                        <tr>
-                            <th class="p-5 text-[10px] font-black uppercase text-slate-400">Order Details</th>
-                            <th class="p-5 text-[10px] font-black uppercase text-slate-400">Status</th>
-                            <th class="p-5 text-[10px] font-black uppercase text-slate-400 text-center">View</th>
-                        </tr>
-                    </thead>
-                    <tbody id="masterTableBody" class="divide-y divide-slate-50"></tbody>
-                </table>
-            </div>
+        <div class="w-px bg-slate-100"></div>
+        <div class="shrink-0 text-center px-3">
+            <p class="text-[8px] font-black text-blue-400 uppercase">Created</p>
+            <h3 id="stat-created"   class="text-2xl font-black text-blue-600">0</h3>
         </div>
-    </main>
-
-    <div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 modal-blur">
-        <div class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-            <div class="p-6 bg-slate-50 border-b flex justify-between items-center">
-                <h3 id="v_id" class="text-lg font-black text-blue-600">ORD-000</h3>
-                <button onclick="closeModals()" class="text-slate-300 hover:text-slate-900"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
-            </div>
-            <div class="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
-                
-                <div class="space-y-4">
-                    <div class="p-4 bg-slate-50 rounded-2xl">
-                        <p id="v_name" class="font-black text-lg uppercase"></p>
-                        <p id="v_mob" class="text-sm font-bold text-green-600"></p>
-                        <p id="v_altmob" class="text-[10px] font-bold text-slate-500 uppercase mt-1"></p>
-                    </div>
-                    <div class="p-4 bg-slate-50 rounded-2xl">
-                        <p class="text-[9px] font-black text-slate-400 uppercase">Shipping Address</p>
-                        <p id="v_addr" class="text-xs font-bold leading-relaxed"></p>
-                        <p id="v_location" class="text-[10px] font-bold text-blue-600 mt-1"></p>
-                        <p id="v_lm" class="mt-2 text-[9px] font-black text-blue-700 bg-blue-100 px-2 py-1 rounded inline-block"></p>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="space-y-2"><p class="text-[8px] font-black text-center uppercase">Label</p><img id="v_img_label" src="" class="h-24 w-full object-cover rounded-xl border bg-slate-100"></div>
-                    <div class="space-y-2"><p class="text-[8px] font-black text-center uppercase">Pic 1</p><img id="v_img_parcel1" src="" class="h-24 w-full object-cover rounded-xl border bg-slate-100"></div>
-                    <div class="space-y-2"><p class="text-[8px] font-black text-center uppercase">Pic 2</p><img id="v_img_parcel2" src="" class="h-24 w-full object-cover rounded-xl border bg-slate-100"></div>
-                </div>
-                <button id="modalPrintBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl uppercase text-xs shadow-lg"><i class="fa-solid fa-print"></i> Reprint Slip</button>
-            </div>
+        <div class="shrink-0 text-center px-3">
+            <p class="text-[8px] font-black text-yellow-500 uppercase">Received</p>
+            <h3 id="stat-received"  class="text-2xl font-black text-yellow-600">0</h3>
+        </div>
+        <div class="shrink-0 text-center px-3">
+            <p class="text-[8px] font-black text-purple-400 uppercase">Packed</p>
+            <h3 id="stat-packed"    class="text-2xl font-black text-purple-600">0</h3>
+        </div>
+        <div class="shrink-0 text-center px-3">
+            <p class="text-[8px] font-black text-green-400 uppercase">Dispatch</p>
+            <h3 id="stat-dispatch"  class="text-2xl font-black text-green-600">0</h3>
+        </div>
+        <div class="shrink-0 text-center px-3">
+            <p class="text-[8px] font-black text-teal-400 uppercase">Delivered</p>
+            <h3 id="stat-delivered" class="text-2xl font-black text-teal-600">0</h3>
+        </div>
+        <div class="w-px bg-slate-100"></div>
+        <div class="shrink-0 text-center px-3">
+            <p class="text-[8px] font-black text-red-500 uppercase">TAT Breach</p>
+            <h3 id="stat-breach"    class="text-2xl font-black text-red-600">0</h3>
         </div>
     </div>
+</div>
 
-    <div id="globalLoader" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur">
-        <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4">
-            <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-            <p class="text-[10px] font-black uppercase tracking-widest">Getting data please wait</p>
-        </div>
-    </div>
-
-    <div id="printArea">
-        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-            <h1 style="margin: 0; font-size: 20px;">DELIVERY SLIP</h1>
-        </div>
-        
-        <div style="margin-bottom: 10px; font-size: 14px;">
-            <p style="margin: 0; font-weight: 900; text-decoration: underline;">To,</p>
-            <p style="margin: 4px 0 0 0;">Customer Name:- <span id="prName" style="font-weight: 900;"></span></p>
-            <p style="margin: 2px 0 0 0;">Shipping Address:- <span id="prAddr"></span> <span id="prPO"></span></p>
-            <p style="margin: 2px 0 0 0;">City:- <span id="prCity"></span></p>
-            <p style="margin: 2px 0 0 0;">State:- <span id="prState"></span></p>
-            <p style="margin: 2px 0 0 0;">Pincode:- <span id="prPin"></span></p>
-            <p style="margin: 2px 0 0 0;">Landmark:- <span id="prLandmark"></span></p>
-            <p style="margin: 4px 0 0 0; font-weight: 900;">Contact number:- <span id="prMob"></span></p>
-            <p style="margin: 2px 0 0 0;">Alt Number:- <span id="prAltMob"></span></p>
-        </div>
-
-        <div style="border-top: 2px dashed #000; padding-top: 8px; margin-bottom: 10px; font-size: 13px;">
-            <p style="margin: 0; font-weight: 900; text-decoration: underline;">From,</p>
-            <p style="margin: 4px 0 0 0; font-weight: 900;">Lenskart Pali</p>
-            <p style="margin: 2px 0 0 0; line-height: 1.2;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Rajasthan 306401</p>
-            <p style="margin: 2px 0 0 0; font-weight: 900;">Contact number:- 8290776551</p>
-        </div>
-
-        <div style="text-align: center; border-top: 2px solid #000; padding-top: 10px;">
-            <div id="qrcode"></div>
-            <p style="margin: 5px 0 0 0; font-weight: 900; font-size: 15px;">Order id:- <span id="prId"></span></p>
-        </div>
-    </div>
-
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec"; 
-        let lightOrders = [];
-
-        async function refreshData() {
-            document.getElementById('globalLoader').classList.replace('hidden', 'flex');
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
-                const result = await res.json();
-                if(result.status === "success") { lightOrders = result.orders; renderTable(); }
-            } catch (e) { alert("Fetch Error"); }
-            document.getElementById('globalLoader').classList.replace('flex', 'hidden');
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('masterTableBody');
-            let breachCount = 0;
-            
-            tbody.innerHTML = lightOrders.reverse().map(order => {
-                const tatAlert = getTATAlert(order);
-                if(tatAlert.includes("Breach") || tatAlert.includes("Pending")) breachCount++;
-
-                return `
+<!-- ── ORDER TABLE ───────────────────────────────────────────────────────── -->
+<main class="p-4 lg:p-6 max-w-7xl mx-auto">
+    <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50 border-b border-slate-100">
                     <tr>
-                        <td class="p-5">
-                            <p class="text-[11px] font-black text-blue-600">${order[0]}</p>
-                            <p class="text-sm font-bold uppercase">${order[1]}</p>
-                            <p class="text-[9px] font-black text-slate-400">${new Date(order[3]).toLocaleDateString()}</p>
-                        </td>
-                        <td class="p-5">
-                            <select onchange="updateStatus('${order[0]}', this.value)" class="bg-slate-50 border border-slate-200 text-[10px] font-black uppercase rounded-lg px-2 py-1 outline-none">
-                                <option value="Created" ${order[4] == 'Created' ? 'selected' : ''}>Created</option>
-                                <option value="Received" ${order[4] == 'Received' ? 'selected' : ''}>Received</option>
-                                <option value="Packed" ${order[4] == 'Packed' ? 'selected' : ''}>Packed</option>
-                                <option value="Dispatch" ${order[4] == 'Dispatch' ? 'selected' : ''}>Dispatch</option>
-                                <option value="Delivered" ${order[4] == 'Delivered' ? 'selected' : ''}>Delivered</option>
-                            </select>
-                            <div class="mt-1">${tatAlert}</div>
-                        </td>
-                        <td class="p-5 text-center">
-                            <button onclick="viewOrder('${order[0]}')" class="text-blue-500 hover:scale-110 transition"><i class="fa-solid fa-eye text-lg"></i></button>
-                        </td>
+                        <th class="p-4 text-[9px] font-black uppercase text-slate-400">Order</th>
+                        <th class="p-4 text-[9px] font-black uppercase text-slate-400">Customer</th>
+                        <th class="p-4 text-[9px] font-black uppercase text-slate-400">Location</th>
+                        <th class="p-4 text-[9px] font-black uppercase text-slate-400">Status</th>
+                        <th class="p-4 text-[9px] font-black uppercase text-slate-400 text-center">Actions</th>
                     </tr>
-                `;
-            }).join('');
-            
-            document.getElementById('stat-total').innerText = lightOrders.length;
-            document.getElementById('stat-breach').innerText = breachCount;
-        }
+                </thead>
+                <tbody id="masterTableBody" class="divide-y divide-slate-50"></tbody>
+            </table>
+            <div id="emptyState" class="hidden py-16 text-center text-slate-300">
+                <i class="fa-solid fa-box-open text-4xl mb-3"></i>
+                <p class="text-xs font-black uppercase">No orders found</p>
+            </div>
+        </div>
+    </div>
+</main>
 
-        function getTATAlert(order) {
-            const status = order[4];
-            const createdDate = new Date(order[3]);
-            const lastUpdated = new Date(order[5]);
-            const now = new Date();
-            const diffDays = (now - createdDate) / (1000 * 60 * 60 * 24);
-            const diffHrs = (now - lastUpdated) / (1000 * 60 * 60);
+<!-- ── VIEW ORDER MODAL ──────────────────────────────────────────────────── -->
+<div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 modal-blur">
+    <div class="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden">
+        <div class="p-5 bg-slate-50 border-b flex justify-between items-center">
+            <div>
+                <h3 id="v_id"     class="text-base font-black text-blue-600 font-mono"></h3>
+                <p  id="v_status" class="text-[9px] font-black uppercase mt-0.5"></p>
+            </div>
+            <button onclick="closeModals()" class="text-slate-300 hover:text-slate-900 transition">
+                <i class="fa-solid fa-circle-xmark text-2xl"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto scrollbar-hide">
 
-            if (status === "Created" && diffDays > 4) return `<span class="text-[8px] font-black text-red-600 bg-red-50 p-1 rounded uppercase animate-pulse">Pending Receive</span>`;
-            if (status === "Received" && diffHrs > 12) return `<span class="text-[8px] font-black text-orange-600 bg-orange-50 p-1 rounded uppercase">12H TAT Breach</span>`;
-            return `<span class="text-[8px] font-black text-slate-300 uppercase">${status}</span>`;
-        }
+            <!-- Customer Info -->
+            <div class="p-4 bg-slate-50 rounded-2xl space-y-1">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Customer</p>
+                <p id="v_name"   class="font-black text-base uppercase"></p>
+                <p id="v_mob"    class="text-sm font-bold text-green-600"></p>
+                <p id="v_altmob" class="text-[10px] font-bold text-slate-400 uppercase"></p>
+                <p id="v_date"   class="text-[9px] font-bold text-slate-400 mt-1"></p>
+            </div>
 
-        function getDriveImage(url) {
-            if(!url) return "";
-            if(url.includes("view?usp=drivesdk")) {
-                const id = url.match(/\/d\/(.+?)\//);
-                if(id && id[1]) return `https://drive.google.com/uc?export=view&id=${id[1]}`;
+            <!-- Address -->
+            <div class="p-4 bg-slate-50 rounded-2xl space-y-1">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Shipping Address</p>
+                <p id="v_addr"     class="text-xs font-bold leading-relaxed"></p>
+                <p id="v_location" class="text-[10px] font-bold text-blue-600 mt-1"></p>
+                <p id="v_lm"       class="mt-1 text-[9px] font-black text-blue-700 bg-blue-50 px-2 py-1 rounded-lg inline-block"></p>
+            </div>
+
+            <!-- Dispatch Info (shown when dispatched) -->
+            <div id="v_dispatch_block" class="p-4 bg-green-50 rounded-2xl space-y-1 hidden">
+                <p class="text-[8px] font-black text-green-600 uppercase tracking-widest">Dispatch Info</p>
+                <p id="v_courier"   class="text-sm font-black"></p>
+                <p id="v_trackid"   class="text-xs font-bold text-slate-600 font-mono"></p>
+                <p id="v_rider"     class="text-[10px] font-bold text-slate-500"></p>
+                <p id="v_pickup"    class="text-[10px] font-bold text-slate-500"></p>
+                <p id="v_ocr"       class="text-[10px] font-bold text-slate-400 italic"></p>
+            </div>
+
+            <!-- 3 Photos -->
+            <div>
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Parcel Photos</p>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="space-y-1">
+                        <p class="text-[7px] font-black text-center uppercase text-slate-400">Label</p>
+                        <img id="v_img_label"   src="" onerror="this.src=''" alt="Label"
+                            class="img-thumb h-24 w-full object-cover rounded-xl border bg-slate-100"
+                            onclick="openImgFull(this.src)">
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-[7px] font-black text-center uppercase text-slate-400">Parcel 1</p>
+                        <img id="v_img_parcel1" src="" onerror="this.src=''" alt="Parcel 1"
+                            class="img-thumb h-24 w-full object-cover rounded-xl border bg-slate-100"
+                            onclick="openImgFull(this.src)">
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-[7px] font-black text-center uppercase text-slate-400">Parcel 2</p>
+                        <img id="v_img_parcel2" src="" onerror="this.src=''" alt="Parcel 2"
+                            class="img-thumb h-24 w-full object-cover rounded-xl border bg-slate-100"
+                            onclick="openImgFull(this.src)">
+                    </div>
+                </div>
+            </div>
+
+            <button id="modalPrintBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl uppercase text-xs shadow-lg tracking-widest transition">
+                <i class="fa-solid fa-print mr-2"></i>Reprint Delivery Slip
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── IMAGE FULLSCREEN ──────────────────────────────────────────────────── -->
+<div id="imgModal" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur" onclick="closeImgFull()">
+    <img id="imgFull" src="" class="max-h-[90vh] max-w-full rounded-2xl shadow-2xl object-contain">
+</div>
+
+<!-- ── GLOBAL LOADER ──────────────────────────────────────────────────────── -->
+<div id="globalLoader" class="fixed inset-0 z-[600] hidden items-center justify-center p-4 modal-blur">
+    <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4">
+        <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+        <p class="text-[10px] font-black uppercase tracking-widest" id="loaderMsg">Loading...</p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     DELIVERY SLIP (58mm thermal) — UPGRADED
+     Includes: Order date, courier info, both phones, proper FROM section
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="printArea">
+
+    <!-- HEADER -->
+    <div style="text-align:center; border-bottom:2.5px solid #000; padding-bottom:5px; margin-bottom:6px;">
+        <p style="margin:0; font-size:8pt; font-weight:900; letter-spacing:3px; text-transform:uppercase;">LENSKART</p>
+        <p style="margin:0; font-size:14pt; font-weight:900; letter-spacing:1px;">DELIVERY SLIP</p>
+        <p style="margin:2px 0 0 0; font-size:7pt; color:#444;">📞 8290776551 · Pali, Rajasthan</p>
+    </div>
+
+    <!-- ORDER META -->
+    <div style="border-bottom:1px dashed #999; padding-bottom:5px; margin-bottom:5px;">
+        <table style="width:100%; font-size:8pt; border-collapse:collapse;">
+            <tr>
+                <td style="font-weight:900;">ORDER:</td>
+                <td style="font-weight:900; text-align:right; font-size:9pt;" id="prId"></td>
+            </tr>
+            <tr>
+                <td style="color:#555;">Date:</td>
+                <td style="text-align:right; color:#555;" id="prOrderDate"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- TO / CUSTOMER -->
+    <div style="border-bottom:1px dashed #999; padding-bottom:6px; margin-bottom:5px;">
+        <p style="margin:0; font-size:7pt; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#555;">▶ TO</p>
+        <p style="margin:2px 0 0 0; font-size:11pt; font-weight:900; text-transform:uppercase; line-height:1.1;" id="prName"></p>
+        <p style="margin:3px 0 0 0; font-size:8.5pt; line-height:1.3;" id="prFullAddr"></p>
+        <p style="margin:3px 0 0 0; font-size:7.5pt; color:#333; display:none;" id="prLandmarkLine"></p>
+        <p style="margin:4px 0 0 0; font-size:9pt; font-weight:900;">📞 <span id="prMob"></span></p>
+        <p style="margin:1px 0 0 0; font-size:8pt; color:#444; display:none;" id="prAltLine">Alt: <span id="prAltMob"></span></p>
+    </div>
+
+    <!-- COURIER (shown only if dispatched) -->
+    <div id="prCourierSection" style="border-bottom:1px dashed #999; padding-bottom:5px; margin-bottom:5px; display:none;">
+        <p style="margin:0; font-size:7pt; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#555;">▶ COURIER</p>
+        <table style="width:100%; font-size:8pt; border-collapse:collapse; margin-top:2px;">
+            <tr>
+                <td style="font-weight:900;">Service:</td>
+                <td style="font-weight:900; text-align:right;" id="prCourier"></td>
+            </tr>
+            <tr>
+                <td>Track ID:</td>
+                <td style="text-align:right; font-family:monospace; font-weight:900;" id="prTrackId"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- FROM -->
+    <div style="border-bottom:1px dashed #999; padding-bottom:5px; margin-bottom:6px;">
+        <p style="margin:0; font-size:7pt; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#555;">▶ FROM</p>
+        <p style="margin:2px 0 0 0; font-size:9pt; font-weight:900;">Lenskart Pali</p>
+        <p style="margin:1px 0 0 0; font-size:7.5pt; line-height:1.3;">Shop No 3 &amp; 4, Ground Floor, Ahinsa Complex,<br>Ambedkar Cir, Suraj Pole, Pali, Raj. 306401</p>
+        <p style="margin:2px 0 0 0; font-size:8pt; font-weight:900;">📞 8290776551</p>
+    </div>
+
+    <!-- QR + ORDER ID -->
+    <div style="text-align:center; padding-top:4px;">
+        <div id="qrcode"></div>
+        <p style="margin:3px 0 0 0; font-size:10pt; font-weight:900; letter-spacing:1px; font-family:monospace;" id="prIdBottom"></p>
+        <p style="margin:1px 0 0 0; font-size:6pt; color:#888; letter-spacing:2px; text-transform:uppercase;">Scan to Track</p>
+    </div>
+
+</div><!-- /printArea -->
+
+<script>
+    // ─── CONFIG ────────────────────────────────────────────────────────────
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+
+    // ─── STATE ─────────────────────────────────────────────────────────────
+    let allOrders = []; // FIX: separate master array so filter/reverse don't corrupt it
+
+    // ─── LOAD DATA ─────────────────────────────────────────────────────────
+    async function refreshData() {
+        showLoader("Refreshing orders...");
+        try {
+            const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
+            const result = await res.json();
+            if (result.status === "success") {
+                allOrders = result.orders; // store original
+                renderTable(allOrders);
+            } else {
+                alert("Load Error: " + (result.message || "Unknown"));
             }
-            return url;
+        } catch (err) {
+            alert("Network Error: " + err.message);
+        }
+        hideLoader();
+    }
+
+    // ─── RENDER TABLE ──────────────────────────────────────────────────────
+    // FIX: Use [...allOrders].reverse() so we never mutate the master array
+    function renderTable(orders) {
+        const tbody      = document.getElementById('masterTableBody');
+        const statusFilter = document.getElementById('statusFilter').value;
+        const searchQ    = document.getElementById('searchBox').value.toUpperCase().trim();
+
+        // Filter
+        let filtered = [...orders].reverse();
+        if (statusFilter) filtered = filtered.filter(o => o[4] === statusFilter);
+        if (searchQ)      filtered = filtered.filter(o =>
+            o[0].toUpperCase().includes(searchQ) || o[1].toUpperCase().includes(searchQ)
+        );
+
+        // Stats from ALL orders
+        const counts = { Created:0, Received:0, Packed:0, Dispatch:0, Delivered:0, breach:0 };
+        for (const o of orders) {
+            if (counts[o[4]] !== undefined) counts[o[4]]++;
+            if (isBreach(o)) counts.breach++;
+        }
+        setText('stat-total',     orders.length);
+        setText('stat-created',   counts.Created);
+        setText('stat-received',  counts.Received);
+        setText('stat-packed',    counts.Packed);
+        setText('stat-dispatch',  counts.Dispatch);
+        setText('stat-delivered', counts.Delivered);
+        setText('stat-breach',    counts.breach);
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = "";
+            document.getElementById('emptyState').classList.remove('hidden');
+            return;
+        }
+        document.getElementById('emptyState').classList.add('hidden');
+
+        tbody.innerHTML = filtered.map(order => {
+            const breach    = isBreach(order);
+            const statusBadge = getStatusBadge(order[4], breach);
+            const rowClass    = breach ? 'status-row-breach' :
+                                order[4] === 'Dispatch'  ? 'status-row-dispatch' :
+                                order[4] === 'Delivered' ? 'status-row-delivered' : '';
+
+            // FIX: escHtml to prevent XSS
+            return `
+            <tr class="${rowClass}">
+                <td class="p-4">
+                    <p class="text-[10px] font-black text-blue-600 font-mono">${escHtml(order[0])}</p>
+                    <p class="text-[9px] font-bold text-slate-400">${formatDate(order[3])}</p>
+                </td>
+                <td class="p-4">
+                    <p class="text-xs font-black uppercase">${escHtml(order[1])}</p>
+                    <p class="text-[9px] font-bold text-green-600">${escHtml(order[2])}</p>
+                </td>
+                <td class="p-4">
+                    <p class="text-[9px] font-bold text-slate-500">${escHtml(order[6])}</p>
+                    <p class="text-[9px] font-bold text-blue-500">${escHtml(order[7])}, ${escHtml(order[8])}</p>
+                </td>
+                <td class="p-4">
+                    <select onchange="updateStatus('${escHtml(order[0])}', this.value)"
+                        class="bg-slate-50 border border-slate-200 text-[9px] font-black uppercase rounded-lg px-2 py-1 outline-none cursor-pointer">
+                        ${['Created','Received','Packed','Dispatch','Delivered']
+                            .map(s => `<option value="${s}" ${order[4]===s?'selected':''}>${s}</option>`)
+                            .join('')}
+                    </select>
+                    <div class="mt-1">${statusBadge}</div>
+                </td>
+                <td class="p-4 text-center">
+                    <button onclick="viewOrder('${escHtml(order[0])}')"
+                        class="text-blue-500 hover:text-blue-700 hover:scale-110 transition text-lg">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ─── FILTER TABLE ──────────────────────────────────────────────────────
+    function filterTable() {
+        renderTable(allOrders);
+    }
+
+    // ─── TAT / BREACH HELPERS ──────────────────────────────────────────────
+    function isBreach(order) {
+        const status    = order[4];
+        const created   = new Date(order[3]);
+        const updated   = new Date(order[5]);
+        const now       = new Date();
+        const ageDays   = (now - created) / 864e5;
+        const idleHours = (now - updated) / 36e5;
+        return (status === "Created" && ageDays > 4) || (status === "Received" && idleHours > 12);
+    }
+
+    function getStatusBadge(status, breach) {
+        if (breach) return `<span class="badge-breach text-[7px] font-black px-1.5 py-0.5 rounded-md uppercase animate-pulse">⚠ TAT Breach</span>`;
+        const cls = {
+            Created: 'badge-created', Received: 'badge-received',
+            Packed: 'badge-packed', Dispatch: 'badge-dispatch', Delivered: 'badge-delivered'
+        }[status] || '';
+        return `<span class="${cls} text-[7px] font-black px-1.5 py-0.5 rounded-md uppercase">${status}</span>`;
+    }
+
+    // ─── VIEW ORDER DETAIL ─────────────────────────────────────────────────
+    async function viewOrder(id) {
+        showLoader("Loading order...");
+        try {
+            const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
+            const result = await res.json();
+
+            if (result.status !== "success" || !result.data.order) {
+                hideLoader(); alert("Order data not found."); return;
+            }
+
+            const d = result.data.order;
+            const t = result.data.track;
+
+            setText('v_id',       d[0]);
+            setText('v_status',   d[11]);
+            setText('v_name',     d[1]);
+            setText('v_mob',      d[3]);
+            setText('v_altmob',   d[4] && d[4] !== "N/A" ? "Alt: " + d[4] : "");
+            setText('v_date',     "Created: " + formatDate(d[10]));
+            setText('v_addr',     d[2]);
+            setText('v_location', `${d[6]}, ${d[7]}, ${d[8]} — ${d[5]}`);
+            setText('v_lm',       d[9] && d[9] !== "N/A" ? "🏠 " + d[9] : "");
+
+            // Dispatch block
+            const dispBlock = document.getElementById('v_dispatch_block');
+            if (t) {
+                setText('v_courier',  "🚚 " + (t[1] || "N/A"));
+                setText('v_trackid',  "Track: " + (t[2] || "N/A"));
+                setText('v_rider',    "Rider: " + (t[3] || "N/A"));
+                setText('v_pickup',   "Pickup: " + (t[4] ? formatDate(t[4]) : "N/A"));
+                setText('v_ocr',      t[9] ? "OCR: " + t[9] : "");
+                dispBlock.classList.remove('hidden');
+            } else {
+                dispBlock.classList.add('hidden');
+            }
+
+            // 3 images
+            setImgSrc('v_img_label',   t ? t[6] : "");
+            setImgSrc('v_img_parcel1', t ? t[7] : "");
+            setImgSrc('v_img_parcel2', t ? t[8] : "");
+
+            // Print button — FIX: pass full data including tracking
+            document.getElementById('modalPrintBtn').onclick = () => {
+                triggerPrint(d[0], {
+                    name:      d[1], address: d[2], po:  d[6],
+                    city:      d[7], state:   d[8], pin: d[5],
+                    lm:        d[9], mob:     d[3], altMob: d[4],
+                    createdAt: formatDate(d[10])
+                }, t);
+            };
+
+            hideLoader();
+            document.getElementById('viewModal').classList.replace('hidden', 'flex');
+        } catch (err) {
+            hideLoader();
+            alert("Fetch Error: " + err.message);
+        }
+    }
+
+    // ─── UPDATE STATUS ─────────────────────────────────────────────────────
+    async function updateStatus(id, newStatus) {
+        // Optimistic UI: update local array immediately
+        const order = allOrders.find(o => o[0] === id);
+        if (order) {
+            order[4] = newStatus;
+            order[5] = new Date().toISOString();
+        }
+        renderTable(allOrders);
+
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body:   JSON.stringify({ action: "updateStatus", orderId: id, status: newStatus })
+            });
+            // Silent success — no full reload needed for status change
+        } catch (err) {
+            alert("Status Update Failed: " + err.message);
+        }
+    }
+
+    // ─── EOD REPORT ────────────────────────────────────────────────────────
+    async function generateEOD() {
+        if (!confirm("Send EOD Report to store email?")) return;
+        showLoader("Generating EOD...");
+        try {
+            const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) });
+            const result = await res.json();
+            hideLoader();
+            alert(result.status === "success" ? "✅ EOD Report Sent!" : "Error: " + result.message);
+        } catch (err) {
+            hideLoader();
+            alert("EOD Error: " + err.message);
+        }
+    }
+
+    // ─── PRINT DELIVERY SLIP ───────────────────────────────────────────────
+    // FIX: Unified field names (po not postOffice, handled cleanly)
+    // FIX: Courier info now included on reprint if dispatched
+    function triggerPrint(orderId, data, track) {
+        // ORDER META
+        setText('prId',        orderId);
+        setText('prIdBottom',  orderId);
+        setText('prOrderDate', data.createdAt || formatDate(new Date()));
+
+        // CUSTOMER
+        setText('prName', data.name || "");
+
+        // Full address — compact for 58mm
+        const po   = data.po || data.postOffice || "";
+        const addr = [
+            data.address,
+            po,
+            [data.city, data.state].filter(Boolean).join(", ") + (data.pin || data.pincode ? " — " + (data.pin || data.pincode) : "")
+        ].filter(Boolean).join(", ");
+        setText('prFullAddr', addr);
+
+        const lm    = data.lm || data.landmark || "";
+        const lmEl  = document.getElementById('prLandmarkLine');
+        if (lm && lm !== "N/A") { lmEl.innerText = "🏠 " + lm; lmEl.style.display = "block"; }
+        else                    { lmEl.style.display = "none"; }
+
+        // MOBILE
+        setText('prMob', data.mob || data.mobile || "");
+        const alt   = data.altMob || data.altMobile || "";
+        const altEl = document.getElementById('prAltLine');
+        if (alt && alt !== "N/A") { setText('prAltMob', alt); altEl.style.display = "block"; }
+        else                      { altEl.style.display = "none"; }
+
+        // COURIER SECTION
+        const courierEl = document.getElementById('prCourierSection');
+        if (track && track[1] && track[1] !== "N/A") {
+            setText('prCourier', track[1]);
+            setText('prTrackId', track[2] || "—");
+            courierEl.style.display = "block";
+        } else {
+            courierEl.style.display = "none";
         }
 
-        async function viewOrder(id) {
-            document.getElementById('globalLoader').classList.replace('hidden', 'flex');
-            try {
-                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
-                const result = await res.json();
-                const d = result.data.order;
-                const t = result.data.track;
-                
-                document.getElementById('v_id').innerText = d[0];
-                document.getElementById('v_name').innerText = d[1];
-                document.getElementById('v_mob').innerText = d[3];
-                document.getElementById('v_altmob').innerText = "Alt: " + (d[4] || "N/A");
-                
-                document.getElementById('v_addr').innerText = d[2];
-                document.getElementById('v_location').innerText = `${d[6]}, ${d[7]}, ${d[8]} - ${d[5]}`;
-                document.getElementById('v_lm').innerText = "Landmark: " + d[9];
-                
-                document.getElementById('v_img_label').src = t ? getDriveImage(t[6]) : "";
-                document.getElementById('v_img_parcel1').src = t ? getDriveImage(t[7]) : "";
-                document.getElementById('v_img_parcel2').src = t ? getDriveImage(t[8]) : "";
+        // QR CODE
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), {
+            text:         orderId,
+            width:        90,
+            height:       90,
+            correctLevel: QRCode.CorrectLevel.H
+        });
 
-                document.getElementById('modalPrintBtn').onclick = () => { triggerPrint(id, { name: d[1], address: d[2], po: d[6], city: d[7], state: d[8], pin: d[5], lm: d[9], mob: d[3], altMob: d[4] }); };
-                document.getElementById('viewModal').classList.replace('hidden', 'flex');
-            } catch (e) { alert("Detail Fetch Error"); }
-            document.getElementById('globalLoader').classList.replace('flex', 'hidden');
-        }
+        setTimeout(() => window.print(), 800);
+    }
 
-        async function updateStatus(id, newStatus) {
-            document.getElementById('globalLoader').classList.replace('hidden', 'flex');
-            try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "updateStatus", orderId: id, status: newStatus }) }); refreshData(); } 
-            catch (e) { alert("Status Update Failed"); document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
-        }
+    // ─── UTILS ────────────────────────────────────────────────────────────
+    function setText(id, val) { const el = document.getElementById(id); if(el) el.innerText = val || ""; }
 
-        async function generateEOD() {
-            if(!confirm("Send EOD Report?")) return;
-            document.getElementById('globalLoader').classList.replace('hidden', 'flex');
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) });
-                alert("EOD Sent!");
-            } catch (e) { alert("EOD Error"); }
-            document.getElementById('globalLoader').classList.replace('flex', 'hidden');
-        }
+    function setImgSrc(id, url) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.src = url && url.length > 10 ? url : "";
+    }
 
-        function triggerPrint(id, data) {
-            document.getElementById('prId').innerText = id; document.getElementById('prName').innerText = data.name;
-            document.getElementById('prAddr').innerText = data.address; document.getElementById('prPO').innerText = data.po ? ", " + data.po : "";
-            document.getElementById('prCity').innerText = data.city || ""; document.getElementById('prState').innerText = data.state || "";
-            document.getElementById('prPin').innerText = data.pin; document.getElementById('prLandmark').innerText = data.lm;
-            document.getElementById('prMob').innerText = data.mob; document.getElementById('prAltMob').innerText = data.altMob || "N/A";
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: id, width: 100, height: 100, correctLevel : QRCode.CorrectLevel.H });
-            setTimeout(() => window.print(), 1000);
-        }
-        function closeModals() { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
-        window.onload = refreshData;
-    </script>
+    function escHtml(s) {
+        return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function formatDate(d) {
+        if (!d) return "";
+        return new Date(d).toLocaleDateString("en-IN", { day:'numeric', month:'short', year:'numeric' });
+    }
+
+    function openImgFull(src) {
+        if (!src) return;
+        document.getElementById('imgFull').src = src;
+        document.getElementById('imgModal').classList.replace('hidden', 'flex');
+    }
+    function closeImgFull()  { document.getElementById('imgModal').classList.replace('flex', 'hidden'); }
+    function closeModals()   { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
+    function showLoader(msg) {
+        setText('loaderMsg', msg || "Loading...");
+        document.getElementById('globalLoader').classList.replace('hidden', 'flex');
+    }
+    function hideLoader()    { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
+
+    // ─── INIT ─────────────────────────────────────────────────────────────
+    window.onload = refreshData;
+</script>
 </body>
 </html>
