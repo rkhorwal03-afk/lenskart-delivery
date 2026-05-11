@@ -210,8 +210,8 @@
 </div>
 
 <script>
-    // ✅ FINAL SCRIPT URL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
+    // ✅ PRODUCTION EXECUTION URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNWlJJBlKGzjIpkj49a7NK0O0umYK5gnRGiNFfMJgW15FFXWwvIMpBMo43E3On7bhptQ/exec";
 
     let tempPayload = null;
 
@@ -263,11 +263,11 @@
 
         document.getElementById('confirmContent').innerHTML = `
             <div class="space-y-1">
-                <p class="text-blue-600 font-black">ID: ${tempPayload.orderId}</p>
-                <p>NAME: ${tempPayload.name.toUpperCase()}</p>
-                <p>MOB: ${tempPayload.mobile}</p>
-                <p class="text-[10px] opacity-60 leading-tight">${tempPayload.address.toUpperCase()}</p>
-                <p class="text-[10px] text-blue-600">${tempPayload.city}, ${tempPayload.state} — ${tempPayload.pincode}</p>
+                <p class="text-blue-600 font-black text-base">ID: ${tempPayload.orderId}</p>
+                <p><span class="text-slate-400 text-[10px] uppercase">Name</span><br>${tempPayload.name.toUpperCase()}</p>
+                <p><span class="text-slate-400 text-[10px] uppercase">Contact</span><br>${tempPayload.mobile}</p>
+                <p><span class="text-slate-400 text-[10px] uppercase">Shipping Address</span><br>${tempPayload.address.toUpperCase()}</p>
+                <p class="text-[10px] text-blue-600 font-bold">${tempPayload.city}, ${tempPayload.state} — ${tempPayload.pincode}</p>
             </div>
         `;
         document.getElementById('confirmModal').classList.replace('hidden', 'flex');
@@ -277,7 +277,6 @@
         closeConfirm();
         showLoading();
         try {
-            // Send payload to v13.2 backend
             const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(tempPayload) });
             const result = await res.json();
 
@@ -312,7 +311,6 @@
         hideLoading();
     }
 
-    // ✅ PRINT LOGIC MAPPED TO BEAUTIFIED TEMPLATE
     function triggerPrint(orderId, data) {
         setText('prId', orderId);
         setText('prName', data.name);
