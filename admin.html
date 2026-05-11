@@ -45,8 +45,6 @@
 
         #masterTableBody tr { transition: background 0.15s; }
         #masterTableBody tr:hover { background: #f8fafc; }
-        .img-thumb { cursor:zoom-in; transition:transform 0.15s; }
-        .img-thumb:hover { transform:scale(1.05); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
@@ -179,27 +177,18 @@
                 <p id="v_ocr"       class="text-[10px] font-bold text-slate-400 italic"></p>
             </div>
 
-            <div>
+            <div id="parcelPhotosContainer" class="hidden">
                 <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Parcel Photos</p>
                 <div class="grid grid-cols-3 gap-2">
-                    <div class="space-y-1">
-                        <p class="text-[7px] font-black text-center uppercase text-slate-400">Label</p>
-                        <img id="v_img_label"   src="" onerror="this.src=''" alt="Label"
-                            class="img-thumb h-24 w-full object-cover rounded-xl border bg-slate-100"
-                            onclick="openImgFull(this.src)">
-                    </div>
-                    <div class="space-y-1">
-                        <p class="text-[7px] font-black text-center uppercase text-slate-400">Parcel 1</p>
-                        <img id="v_img_parcel1" src="" onerror="this.src=''" alt="Parcel 1"
-                            class="img-thumb h-24 w-full object-cover rounded-xl border bg-slate-100"
-                            onclick="openImgFull(this.src)">
-                    </div>
-                    <div class="space-y-1">
-                        <p class="text-[7px] font-black text-center uppercase text-slate-400">Parcel 2</p>
-                        <img id="v_img_parcel2" src="" onerror="this.src=''" alt="Parcel 2"
-                            class="img-thumb h-24 w-full object-cover rounded-xl border bg-slate-100"
-                            onclick="openImgFull(this.src)">
-                    </div>
+                    <a id="v_link_label" href="#" target="_blank" class="hidden py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 text-center rounded-xl font-black text-[9px] uppercase border border-blue-200 transition">
+                        <i class="fa-solid fa-camera mb-1 text-lg block"></i> Label
+                    </a>
+                    <a id="v_link_parcel1" href="#" target="_blank" class="hidden py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 text-center rounded-xl font-black text-[9px] uppercase border border-blue-200 transition">
+                        <i class="fa-solid fa-box mb-1 text-lg block"></i> Pic 1
+                    </a>
+                    <a id="v_link_parcel2" href="#" target="_blank" class="hidden py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 text-center rounded-xl font-black text-[9px] uppercase border border-blue-200 transition">
+                        <i class="fa-solid fa-box-open mb-1 text-lg block"></i> Pic 2
+                    </a>
                 </div>
             </div>
 
@@ -208,10 +197,6 @@
             </button>
         </div>
     </div>
-</div>
-
-<div id="imgModal" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur" onclick="closeImgFull()">
-    <img id="imgFull" src="" class="max-h-[90vh] max-w-full rounded-2xl shadow-2xl object-contain">
 </div>
 
 <div id="globalLoader" class="fixed inset-0 z-[600] hidden items-center justify-center p-4 modal-blur">
@@ -223,37 +208,37 @@
 
 <div id="printArea">
     
-    <div style="text-align:center; padding-bottom:5px; margin-bottom:10px;">
-        <h1 style="margin:0; font-size:18px; font-weight:bold; text-decoration: underline;">DELIVERY SLIP</h1>
+    <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;">
+        <h1 style="margin:0; font-size:18px; font-weight:bold;">DELIVERY SLIP</h1>
     </div>
 
     <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4;">
-        <p style="margin:0; font-weight:bold;">To,</p>
-        <p style="margin:2px 0 0 0;">Customer Name:- <span id="prName"></span></p>
+        <p style="margin:0; text-decoration: underline;">To,</p>
+        <p style="margin:4px 0 0 0;">Customer Name:- <span id="prName" style="font-weight:bold;"></span></p>
         <p style="margin:2px 0 0 0;">Shipping Address:- <span id="prAddr"></span></p>
         <p style="margin:2px 0 0 0;">City:- <span id="prCity"></span></p>
         <p style="margin:2px 0 0 0;">State:- <span id="prState"></span></p>
         <p style="margin:2px 0 0 0;">Pincode:- <span id="prPin"></span></p>
         <p style="margin:2px 0 0 0;" id="prLandmarkLine">Landmark:- <span id="prLandmark"></span></p>
-        <p style="margin:2px 0 0 0;">Contact number:- <span id="prMob"></span></p>
+        <p style="margin:4px 0 0 0;">Contact number:- <span id="prMob" style="font-weight:bold;"></span></p>
         <p style="margin:2px 0 0 0;" id="prAltLine">Alt Number:- <span id="prAltMob"></span></p>
     </div>
 
-    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4;">
-        <p style="margin:0; font-weight:bold;">From,</p>
+    <div style="margin-bottom: 15px; font-size:14px; line-height: 1.4; border-top: 1px dashed #000; padding-top: 8px;">
+        <p style="margin:0; text-decoration: underline;">From,</p>
+        <p style="margin:4px 0 0 0; font-weight:bold;">Lenskart Pali</p>
         <p style="margin:2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Rajasthan 306401</p>
-        <p style="margin:2px 0 0 0;">Contact number:- 8290776551</p>
+        <p style="margin:2px 0 0 0; font-weight:bold;">Contact number:- 8290776551</p>
     </div>
 
-    <div style="text-align:center;">
+    <div style="text-align:center; border-top: 1px dashed #000; padding-top: 10px;">
         <div id="qrcode" style="display:flex; justify-content:center; margin: 0 auto 5px auto;"></div>
-        <p style="margin:5px 0 0 0; font-size:14px; font-weight:bold;">Order id:- <span id="prId"></span></p>
+        <p style="margin:0; font-size:14px; font-weight:bold;">Order id:- <span id="prId"></span></p>
     </div>
 
 </div>
 
 <script>
-    // ✅ YOUR SCRIPT URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec";
 
     let allOrders = [];
@@ -411,15 +396,27 @@
                 dispBlock.classList.add('hidden');
             }
 
-            setImgSrc('v_img_label',   t ? getDriveImage(t[6]) : "");
-            setImgSrc('v_img_parcel1', t ? getDriveImage(t[7]) : "");
-            setImgSrc('v_img_parcel2', t ? getDriveImage(t[8]) : "");
+            // 🚀 UPDATED: Sets up the Link Buttons instead of image thumbnails
+            const labelUrl = t ? getDriveImage(t[6]) : "";
+            const p1Url    = t ? getDriveImage(t[7]) : "";
+            const p2Url    = t ? getDriveImage(t[8]) : "";
+
+            setupLink('v_link_label', labelUrl);
+            setupLink('v_link_parcel1', p1Url);
+            setupLink('v_link_parcel2', p2Url);
+
+            if (labelUrl || p1Url || p2Url) {
+                document.getElementById('parcelPhotosContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('parcelPhotosContainer').classList.add('hidden');
+            }
 
             document.getElementById('modalPrintBtn').onclick = () => {
                 triggerPrint(d[0], {
                     name:      d[1], address: d[2], po:  d[6],
                     city:      d[7], state:   d[8], pin: d[5],
-                    lm:        d[9], mob:     d[3], altMob: d[4]
+                    lm:        d[9], mob:     d[3], altMob: d[4],
+                    createdAt: formatDate(d[10])
                 }, t);
             };
 
@@ -462,7 +459,7 @@
         
         setText('prCity', data.city || "");
         setText('prState', data.state || "");
-        setText('prPin', data.pin || data.pincode || "");
+        setText('prPin', data.pincode || data.pin || "");
 
         const lm = data.landmark || data.lm || "";
         if (lm && lm !== "N/A") {
@@ -493,18 +490,20 @@
         setTimeout(() => window.print(), 800);
     }
 
-    function setText(id, val) { const el = document.getElementById(id); if(el) el.innerText = val || ""; }
-
-    function setImgSrc(id, url) {
+    // ─── UTILITIES ────────────────────────────────────────────────────────
+    function setupLink(id, url) {
         const el = document.getElementById(id);
-        if (!el) return;
-        el.src = url && url.length > 10 ? url : "";
+        if (url && url.length > 10) {
+            el.href = url;
+            el.classList.replace('hidden', 'block');
+        } else {
+            el.classList.replace('block', 'hidden');
+        }
     }
 
+    function setText(id, val) { const el = document.getElementById(id); if(el) el.innerText = val || ""; }
     function escHtml(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
     function formatDate(d) { if (!d) return ""; return new Date(d).toLocaleDateString("en-IN", { day:'numeric', month:'short', year:'numeric' }); }
-    function openImgFull(src) { if (!src) return; document.getElementById('imgFull').src = src; document.getElementById('imgModal').classList.replace('hidden', 'flex'); }
-    function closeImgFull()  { document.getElementById('imgModal').classList.replace('flex', 'hidden'); }
     function closeModals()   { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
     function showLoader(msg) { setText('loaderMsg', msg || "Loading..."); document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
     function hideLoader()    { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
