@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logistics Analysis | Lenskart Pali</title>
+    <title>Advanced Analysis | Lenskart Pali</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,25 +19,16 @@
         .badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: 900; border-radius: 4px; text-transform: uppercase; border: 1px solid transparent; }
         .badge-Created   { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
         .badge-Dispatch  { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .badge-Delivered { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
         .badge-BREACH    { background: #ffe4e6; color: #991b1b; border-color: #fecade; animation: blink 1.5s infinite; }
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        #globalLoader { backdrop-filter: blur(4px); z-index: 1000; }
 
+        #globalLoader { backdrop-filter: blur(4px); z-index: 1000; }
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
-            #printArea { 
-                display: block !important; 
-                width: 54mm; 
-                color: #000; 
-                background: #fff; 
-                padding: 1mm; 
-                font-family: Arial, sans-serif !important;
-                line-height: 1.3;
-            }
-            #qrcode canvas { display: none !important; }
-            #qrcode img { display: block !important; margin: 0 auto; width: 95px; height: 95px; }
+            #printArea { display: block !important; width: 54mm; color: #000; background: #fff; padding: 1mm; font-family: Arial !important; }
             @page { margin: 0; size: 58mm auto; }
         }
     </style>
@@ -46,7 +37,10 @@
 
 <nav class="bg-slate-900 text-white px-4 py-3 border-b-4 border-blue-600 sticky top-0 z-[100]">
     <div class="max-w-[1600px] mx-auto flex justify-between items-center">
-        <span class="font-black text-xl tracking-tighter">DATA COMMAND</span>
+        <div class="flex items-center gap-3">
+            <span class="font-black text-xl tracking-tighter">DATA COMMAND</span>
+            <span class="text-[9px] bg-blue-600 px-2 py-0.5 rounded font-black uppercase">Lenskart Pali</span>
+        </div>
         <div class="flex gap-2">
             <button onclick="generateEOD()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-[10px] font-black uppercase transition">EOD Report</button>
             <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-[10px] font-black uppercase shadow-lg transition">Refresh DB</button>
@@ -55,9 +49,17 @@
 </nav>
 
 <div class="max-w-[1600px] mx-auto p-4 space-y-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-slate-400 uppercase">Load</p><h3 id="stat-total" class="text-2xl font-black">0</h3></div>
+        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-blue-500 uppercase">New</p><h3 id="stat-created" class="text-2xl font-black">0</h3></div>
+        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-rose-600 uppercase">Breach</p><h3 id="stat-breach" class="text-2xl font-black">0</h3></div>
+        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-green-500 uppercase">Transit</p><h3 id="stat-dispatch" class="text-2xl font-black">0</h3></div>
+    </div>
+
     <div class="bg-slate-100 p-3 rounded-lg flex flex-wrap gap-3 items-center border border-slate-200">
-        <div class="flex-1 min-w-[250px]"><input id="searchBox" oninput="renderTable()" type="text" placeholder="Search ID, Name, Mobile..." class="w-full border border-slate-300 px-4 py-2 text-xs font-bold rounded outline-none shadow-sm"></div>
-        <button id="breachToggle" onclick="toggleBreachFilter()" class="bg-white border border-slate-300 text-slate-500 hover:bg-rose-600 hover:text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm transition"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Breach Tab</button>
+        <div class="flex-1 min-w-[250px]"><input id="searchBox" oninput="renderTable()" type="text" placeholder="Filter ID, Name, Mobile..." class="w-full border border-slate-300 px-4 py-2 text-xs font-bold rounded outline-none shadow-sm"></div>
+        <button id="breachToggle" onclick="toggleBreachFilter()" class="bg-white border px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm transition"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Breach Tab</button>
+        <select id="statusFilter" onchange="renderTable()" class="bg-white border px-3 py-2 text-xs font-bold rounded outline-none shadow-sm"><option value="">All Status</option><option value="Created">Created</option><option value="Dispatch">Dispatch</option><option value="Delivered">Delivered</option></select>
     </div>
 
     <div class="bg-white border border-slate-200 rounded shadow-xl overflow-hidden">
@@ -81,9 +83,9 @@
 </div>
 
 <div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden">
+    <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden">
         <div class="p-5 bg-slate-50 border-b flex justify-between items-center">
-            <h3 id="v_id" class="text-lg font-black text-blue-600 font-mono tracking-tighter"></h3>
+            <h3 id="v_id" class="text-lg font-black text-blue-600 font-mono"></h3>
             <button onclick="closeModals()" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
         </div>
         <div class="p-6 space-y-5">
@@ -96,21 +98,21 @@
                         <p id="v_addr" class="text-[11px] text-slate-500 mt-2 leading-tight"></p>
                     </div>
 
-                    <div id="v_track_box" class="hidden bg-blue-50 p-4 border border-blue-100 rounded-lg">
-                        <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Courier Tracking</p>
-                        <p id="v_courier" class="text-sm font-black text-blue-900 mt-1 uppercase"></p>
-                        <p class="text-xs font-bold text-blue-700">AWB: <span id="v_awb" class="select-all"></span></p>
+                    <div id="v_track_info" class="hidden bg-blue-50 p-4 border border-blue-100 rounded-lg">
+                        <p class="text-[9px] font-black text-blue-400 uppercase">Tracking Details</p>
+                        <p class="text-sm font-black text-blue-900 mt-1"><span id="v_courier"></span></p>
+                        <p class="text-xs font-bold text-blue-700">AWB: <span id="v_trackid" class="select-all"></span></p>
                     </div>
                 </div>
 
                 <div class="space-y-4">
                     <div id="parcelPhotosContainer" class="hidden bg-slate-50 p-4 border rounded-lg space-y-2">
-                        <p class="text-[9px] font-black text-slate-400 uppercase">Verification Links</p>
-                        <a id="v_link_label" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-barcode mr-2"></i>Shipping Label</a>
-                        <a id="v_link_parcel1" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box mr-2"></i>Parcel Pic 1</a>
-                        <a id="v_link_parcel2" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box-open mr-2"></i>Parcel Pic 2</a>
+                        <p class="text-[9px] font-black text-slate-400 uppercase">Attachments</p>
+                        <a id="v_link_label" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-barcode mr-2"></i>View Label</a>
+                        <a id="v_link_parcel1" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box mr-2"></i>View Pic 1</a>
+                        <a id="v_link_parcel2" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box-open mr-2"></i>View Pic 2</a>
                     </div>
-                    <button id="modalPrintBtn" class="w-full bg-slate-900 text-white font-black py-4 rounded uppercase text-xs transition active:scale-95">Reprint Delivery Slip</button>
+                    <button id="modalPrintBtn" class="w-full bg-slate-900 text-white font-black py-4 rounded uppercase text-xs hover:bg-black transition">Reprint Delivery Slip</button>
                 </div>
             </div>
         </div>
@@ -120,25 +122,25 @@
 <div id="globalLoader" class="fixed inset-0 z-[600] hidden items-center justify-center bg-slate-900/50">
     <div class="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 text-center border-t-4 border-blue-600">
         <div class="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-        <p id="loaderMsg" class="text-[11px] font-black uppercase tracking-widest text-slate-800">Syncing Data...</p>
+        <div><p id="loaderMsg" class="text-[11px] font-black uppercase tracking-widest text-slate-800">Processing Data...</p><p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Please Wait</p></div>
     </div>
 </div>
 
 <div id="printArea">
     <div style="text-align: center; border-bottom: 2.5px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
         <p style="margin: 0; font-size: 10pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">LENSKART</p>
-        <h1 style="margin: 0; font-size: 16pt; font-weight: 900; line-height: 1.1; text-decoration: underline;">DELIVERY SLIP</h1>
+        <h1 style="margin: 0; font-size: 16pt; font-weight: 900; text-decoration: underline;">DELIVERY SLIP</h1>
     </div>
     <div style="margin-bottom: 12px; font-size: 11pt; line-height: 1.4;">
         <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 10pt;">TO,</p>
         <p style="margin: 4px 0 0 0;"><b>Customer Name:-</b> <span id="prName" style="text-transform: uppercase; font-weight:900;"></span></p>
         <p style="margin: 2px 0 0 0;"><b>Shipping Address:-</b> <span id="prAddr"></span></p>
         <p style="margin: 2px 0 0 0;"><b>City:-</b> <span id="prCity"></span></p>
-        <p style="margin: 4px 0 0 0;"><b>Contact number:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
+        <p style="margin: 4px 0 0 0;"><b>Contact:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
     </div>
     <div style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 12px; font-size: 10pt; line-height: 1.3;">
-        <p style="margin: 0; font-weight: 900; text-decoration: underline;">FROM,</p>
-        <p style="margin: 4px 0 0 0; font-weight: 900;">LENSKART PALI</p>
+        <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 9pt;">FROM,</p>
+        <p style="margin: 4px 0 0 0; font-weight: 900; font-size: 11pt;">LENSKART PALI</p>
         <p style="margin: 0;">📞 8290776551</p>
     </div>
     <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px;">
@@ -148,9 +150,7 @@
 </div>
 
 <script>
-    // ✅ PRODUCTION EXEC URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNWlJJBlKGzjIpkj49a7NK0O0umYK5gnRGiNFfMJgW15FFXWwvIMpBMo43E3On7bhptQ/exec";
-    
     let allOrders = [];
     let showBreachOnly = false;
 
@@ -158,7 +158,7 @@
     function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
 
     async function refreshData() {
-        showLoading("Fetching Database...");
+        showLoading("Syncing DB...");
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
             const result = await res.json();
@@ -169,39 +169,45 @@
 
     function toggleBreachFilter() {
         showBreachOnly = !showBreachOnly;
-        document.getElementById('breachToggle').className = showBreachOnly ? "bg-rose-600 text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-lg" : "bg-white border border-slate-300 text-slate-500 px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm";
+        document.getElementById('breachToggle').className = showBreachOnly ? "bg-rose-600 text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-lg" : "bg-white border px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm";
         renderTable();
     }
 
     function renderTable() {
         const tbody = document.getElementById('masterTableBody');
         const q = document.getElementById('searchBox').value.toUpperCase().trim();
+        const f = document.getElementById('statusFilter').value;
         const now = new Date();
+
+        let breachTotal = 0;
+        allOrders.forEach(o => {
+            const age = Math.floor((now - new Date(o[3])) / 864e5);
+            if ((o[4] === 'Created' || o[4] === 'Received') && age >= 3) breachTotal++;
+        });
+
+        document.getElementById('stat-total').innerText = allOrders.length;
+        document.getElementById('stat-created').innerText = allOrders.filter(o => o[4] === 'Created').length;
+        document.getElementById('stat-dispatch').innerText = allOrders.filter(o => o[4] === 'Dispatch').length;
+        document.getElementById('stat-breach').innerText = breachTotal;
 
         const filtered = allOrders.filter(o => {
             const age = Math.floor((now - new Date(o[3])) / 864e5);
             const isBreach = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
-            const matchesSearch = (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q));
-            return matchesSearch && (showBreachOnly ? isBreach : true);
+            const matchesSearch = (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q) || o[2].includes(q));
+            const matchesStatus = (f === "" || o[4] === f);
+            const matchesBreach = showBreachOnly ? isBreach : true;
+            return matchesSearch && matchesStatus && matchesBreach;
         }).reverse();
 
         tbody.innerHTML = filtered.map(o => {
             const age = Math.floor((now - new Date(o[3])) / 864e5);
             const isBreach = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
-            return `<tr>
-                <td class="text-[10px] font-bold text-slate-400">${new Date(o[3]).toLocaleDateString('en-IN')}</td>
-                <td class="font-black text-blue-600">${o[0]}</td>
-                <td class="font-bold uppercase">${o[1]}</td>
-                <td class="text-blue-700">${o[2]}</td>
-                <td class="${isBreach ? 'text-rose-600 font-black' : 'text-slate-400'}">${age} Days</td>
-                <td><span class="badge badge-${o[4]}">${o[4]}</span> ${isBreach ? '<span class="badge badge-BREACH">DELAY</span>' : ''}</td>
-                <td class="text-center"><button onclick="viewOrder('${o[0]}')" class="bg-slate-900 text-white px-3 py-1 rounded text-[9px] font-black uppercase">Analyse</button></td>
-            </tr>`;
+            return `<tr><td>${new Date(o[3]).toLocaleDateString('en-IN')}</td><td class="font-black text-blue-600">${o[0]}</td><td class="font-bold uppercase">${o[1]}</td><td class="text-blue-700">${o[2]}</td><td class="${isBreach ? 'text-rose-600 font-black' : 'text-slate-400 font-bold'}">${age} Days</td><td><span class="badge badge-${o[4]}">${o[4]}</span> ${isBreach ? '<span class="badge badge-BREACH">DELAY</span>' : ''}</td><td class="text-center"><button onclick="viewOrder('${o[0]}')" class="bg-slate-900 text-white px-3 py-1 rounded text-[9px] font-black uppercase transition active:scale-95">Analyse</button></td></tr>`;
         }).join('');
     }
 
     async function viewOrder(id) {
-        showLoading(`Analysing ID: ${id}`);
+        showLoading(`Drilling Down ID: ${id}`);
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
             const result = await res.json();
@@ -213,14 +219,13 @@
             document.getElementById('v_mob').innerText = d[3];
             document.getElementById('v_addr').innerText = `${d[2]}, ${d[6]}, ${d[7]} - ${d[5]}`;
             
-            // 🚀 POPULATE TRACKING ID (AWB) AND COURIER FROM EXISTING DATA
-            const trackBox = document.getElementById('v_track_box');
+            // 🚀 FILL TRACKING INFO (ADDED)
             if (t) {
-                trackBox.classList.remove('hidden');
-                document.getElementById('v_courier').innerText = t[1] || "Courier Not Assigned";
-                document.getElementById('v_awb').innerText = t[2] || "N/A";
+                document.getElementById('v_track_info').classList.remove('hidden');
+                document.getElementById('v_courier').innerText = "Courier: " + (t[1] || "N/A");
+                document.getElementById('v_trackid').innerText = t[2] || "N/A";
             } else {
-                trackBox.classList.add('hidden');
+                document.getElementById('v_track_info').classList.add('hidden');
             }
 
             setupLink('v_link_label', t ? t[6] : "");
@@ -252,9 +257,9 @@
     }
 
     async function generateEOD() {
-        if (!confirm("Dispatch Summary Report?")) return;
-        showLoading("Reporting...");
-        try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) }); alert("✅ EOD Sent!"); } catch (e) { alert("Failed."); }
+        if (!confirm("Email Summary?")) return;
+        showLoading("Generating Report...");
+        try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) }); alert("✅ EOD Dispatched!"); } catch (e) { alert("Failed."); }
         hideLoading();
     }
 
