@@ -3,344 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Panel | Lenskart Pali</title>
+    <title>Advanced Analysis | Lenskart Pali</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* ── PRINT: 58mm Thermal Slip Optimization ── */
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: #f8fafc; }
+        .data-table { width: 100%; border-collapse: collapse; background: #fff; }
+        .data-table th { background: #1e293b; color: #fff; font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 12px; border: 1px solid #334155; position: sticky; top: 0; }
+        .data-table td { padding: 10px; font-size: 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .data-table tr:nth-child(even) { background-color: #f1f5f9; }
+        .data-table tr:hover { background-color: #e2e8f0 !important; }
+
+        .badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: 900; border-radius: 4px; text-transform: uppercase; border: 1px solid transparent; }
+        .badge-Created   { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+        .badge-Dispatch  { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .badge-Delivered { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+        .badge-BREACH    { background: #ffe4e6; color: #991b1b; border-color: #fecade; animation: blink 1.5s infinite; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        #globalLoader { backdrop-filter: blur(4px); z-index: 1000; }
         #printArea { display: none; }
         @media print {
             body > *:not(#printArea) { display: none !important; }
-            #printArea {
-                display: block !important;
-                visibility: visible !important;
-                position: absolute; left: 0; top: 0;
-                width: 56mm;
-                padding: 1mm;
-                font-family: 'Arial', sans-serif !important;
-                font-size: 13px !important;
-                color: #000;
-                background: #fff;
-                line-height: 1.4 !important;
-            }
-            #qrcode canvas { display: none !important; }
-            #qrcode img   { display: block !important; margin: 0 auto; width: 95px; height: 90px; }
+            #printArea { display: block !important; width: 54mm; color: #000; background: #fff; padding: 1mm; font-family: Arial !important; }
             @page { margin: 0; size: 58mm auto; }
         }
-        .modal-blur { backdrop-filter: blur(8px); background: rgba(15,23,42,0.65); }
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
+<body class="text-slate-900">
 
-<nav class="bg-slate-900 text-white sticky top-0 z-[100] shadow-2xl border-b border-slate-700">
-    <div class="max-w-xl mx-auto px-4 flex justify-between items-center h-14">
-        <span class="font-black uppercase tracking-widest text-xs text-blue-400">Lenskart · Pali Store</span>
-        <div class="flex gap-1">
-            <button onclick="toggleView('form')"   id="nav-store"   class="px-3 py-1.5 text-[10px] font-black uppercase bg-blue-600 rounded-lg transition-all">New Entry</button>
-            <button onclick="toggleView('search')" id="nav-reprint" class="px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg transition-all">Reprint</button>
-            <a href="rider.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-40">Rider</a>
-            <a href="admin.html"  class="px-3 py-1.5 text-[10px] font-bold uppercase opacity-40">Admin</a>
+<nav class="bg-slate-900 text-white px-4 py-3 border-b-4 border-blue-600 sticky top-0 z-[100]">
+    <div class="max-w-[1600px] mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <span class="font-black text-xl tracking-tighter">DATA COMMAND</span>
+            <span class="text-[9px] bg-blue-600 px-2 py-0.5 rounded font-black uppercase">Lenskart Pali</span>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="generateEOD()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-[10px] font-black uppercase transition">EOD Report</button>
+            <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-[10px] font-black uppercase shadow-lg transition">Refresh DB</button>
         </div>
     </div>
 </nav>
 
-<main class="max-w-xl mx-auto p-4 space-y-6 pb-20">
-
-    <div id="orderFormSection" class="space-y-4 animate-in fade-in duration-300">
-        <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 p-6">
-            <h2 class="text-xs font-black uppercase text-slate-400 mb-5 tracking-widest">Customer Delivery Details</h2>
-            <form id="orderForm" class="space-y-4">
-
-                <div>
-                    <label class="text-[9px] font-black text-blue-600 uppercase tracking-widest">Order ID</label>
-                    <input type="text" id="manualId" required placeholder="Type Manual ID..."
-                        class="w-full border-2 border-slate-200 p-3.5 rounded-2xl font-black uppercase outline-none focus:border-blue-500 mt-1 text-sm transition">
-                </div>
-
-                <input type="text" id="custName" required placeholder="Customer Full Name"
-                    class="w-full border-2 border-slate-200 p-3.5 rounded-2xl outline-none font-bold uppercase text-sm focus:border-blue-500 transition">
-
-                <textarea id="address" required placeholder="Shipping Street Address"
-                    class="w-full border-2 border-slate-200 p-3.5 rounded-2xl outline-none font-bold text-sm focus:border-blue-500 transition" rows="2"></textarea>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="flex items-center border-2 border-slate-200 rounded-2xl focus-within:border-blue-500 bg-white overflow-hidden transition">
-                        <span class="pl-3 pr-1.5 font-black text-slate-400 text-xs bg-slate-50 py-3.5">+91</span>
-                        <input type="tel" id="mobile" required pattern="[0-9]{10}" maxlength="10" placeholder="Contact No"
-                            class="w-full p-3.5 pl-1 bg-transparent outline-none font-bold text-sm">
-                    </div>
-                    <div class="flex items-center border-2 border-slate-200 rounded-2xl focus-within:border-blue-500 bg-white overflow-hidden transition">
-                        <span class="pl-3 pr-1.5 font-black text-slate-400 text-xs bg-slate-50 py-3.5">+91</span>
-                        <input type="tel" id="altMobile" pattern="[0-9]{10}" maxlength="10" placeholder="Alt No"
-                            class="w-full p-3.5 pl-1 bg-transparent outline-none font-bold text-sm">
-                    </div>
-                </div>
-
-                <input type="text" id="landmark" placeholder="Landmark (Optional)"
-                    class="w-full border-2 border-slate-200 p-3.5 rounded-2xl outline-none font-bold text-sm focus:border-blue-500 transition">
-
-                <div class="p-4 bg-blue-50 rounded-2xl space-y-3 border border-blue-100">
-                    <div class="relative">
-                        <input type="number" id="pincode" required placeholder="Pincode"
-                            oninput="handlePincode(this.value)"
-                            class="w-full border-2 border-blue-200 p-3.5 rounded-xl font-black outline-none bg-white focus:border-blue-600 text-sm transition">
-                        <span id="pinLoader" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-blue-400 text-[10px] font-black animate-pulse">FETCHING...</span>
-                    </div>
-                    <select id="postOffice" class="w-full border-2 border-blue-200 p-3.5 rounded-xl bg-white outline-none font-bold text-sm focus:border-blue-500 transition">
-                        <option value="">— Select Area / PO —</option>
-                    </select>
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="city"  readonly placeholder="City"
-                            class="w-full border-0 p-3.5 rounded-xl bg-blue-100 outline-none font-bold text-blue-800 text-sm">
-                        <input type="text" id="state" readonly placeholder="State"
-                            class="w-full border-0 p-3.5 rounded-xl bg-blue-100 outline-none font-bold text-blue-800 text-sm">
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-700 text-white font-black py-4 rounded-2xl uppercase text-xs shadow-lg tracking-widest transition">
-                    Review & Save Order →
-                </button>
-            </form>
-        </div>
+<div class="max-w-[1600px] mx-auto p-4 space-y-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-slate-400 uppercase">Load</p><h3 id="stat-total" class="text-2xl font-black">0</h3></div>
+        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-blue-500 uppercase">New</p><h3 id="stat-created" class="text-2xl font-black">0</h3></div>
+        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-rose-600 uppercase">Breach</p><h3 id="stat-breach" class="text-2xl font-black">0</h3></div>
+        <div class="bg-white p-4 border rounded shadow-sm text-center"><p class="text-[9px] font-black text-green-500 uppercase">Transit</p><h3 id="stat-dispatch" class="text-2xl font-black">0</h3></div>
     </div>
 
-    <div id="searchSection" class="hidden space-y-4 animate-in slide-in-from-bottom duration-300">
-        <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200">
-            <h2 class="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Reprint Delivery Slip</h2>
-            <div class="flex gap-2">
-                <input type="text" id="searchInput" placeholder="Enter Order ID..."
-                    class="flex-1 bg-slate-100 p-4 rounded-2xl outline-none font-black text-blue-600 uppercase border-2 border-transparent focus:border-blue-500 text-sm transition">
-                <button onclick="searchOrder()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-2xl font-black text-xs transition">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-            </div>
+    <div class="bg-slate-100 p-3 rounded-lg flex flex-wrap gap-3 items-center border border-slate-200">
+        <div class="flex-1 min-w-[250px]"><input id="searchBox" oninput="renderTable()" type="text" placeholder="Filter ID, Name, Mobile..." class="w-full border border-slate-300 px-4 py-2 text-xs font-bold rounded outline-none shadow-sm"></div>
+        <button id="breachToggle" onclick="toggleBreachFilter()" class="bg-white border px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm transition"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Breach Tab</button>
+        <select id="statusFilter" onchange="renderTable()" class="bg-white border px-3 py-2 text-xs font-bold rounded outline-none shadow-sm"><option value="">All Status</option><option value="Created">Created</option><option value="Dispatch">Dispatch</option><option value="Delivered">Delivered</option></select>
+    </div>
 
-            <div id="searchResult" class="hidden mt-5 space-y-4">
-                <div class="p-5 bg-slate-900 text-white rounded-[1.5rem] shadow-2xl">
-                    <p id="resId"       class="text-base font-black font-mono text-blue-400"></p>
-                    <p id="resName"     class="font-black uppercase mt-1 text-sm"></p>
-                    <p id="resMob"      class="text-xs font-bold text-green-400 mt-0.5"></p>
-                    <p id="resAddr"     class="text-[10px] mt-2 opacity-60 leading-tight"></p>
+    <div class="bg-white border border-slate-200 rounded shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Mobile</th>
+                        <th>Age</th>
+                        <th>Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="masterTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="viewModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden">
+        <div class="p-5 bg-slate-50 border-b flex justify-between items-center">
+            <h3 id="v_id" class="text-lg font-black text-blue-600 font-mono"></h3>
+            <button onclick="closeModals()" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
+        </div>
+        <div class="p-6 space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-4">
+                    <div class="bg-slate-50 p-4 border rounded-lg">
+                        <p class="text-[9px] font-black text-slate-400 uppercase">Customer Profile</p>
+                        <p id="v_name" class="font-black text-md uppercase text-slate-800 mt-1"></p>
+                        <p id="v_mob" class="text-xs font-bold text-blue-600"></p>
+                        <p id="v_addr" class="text-[11px] text-slate-500 mt-2 leading-tight"></p>
+                    </div>
+
+                    <div id="v_track_info" class="hidden bg-blue-50 p-4 border border-blue-100 rounded-lg">
+                        <p class="text-[9px] font-black text-blue-400 uppercase">Tracking Details</p>
+                        <p class="text-sm font-black text-blue-900 mt-1"><span id="v_courier"></span></p>
+                        <p class="text-xs font-bold text-blue-700">AWB: <span id="v_trackid" class="select-all"></span></p>
+                    </div>
                 </div>
-                <button id="reprintBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl uppercase text-xs shadow-xl tracking-widest transition">
-                    <i class="fa-solid fa-print mr-2"></i>Reprint Slip Now
-                </button>
+
+                <div class="space-y-4">
+                    <div id="parcelPhotosContainer" class="hidden bg-slate-50 p-4 border rounded-lg space-y-2">
+                        <p class="text-[9px] font-black text-slate-400 uppercase">Attachments</p>
+                        <a id="v_link_label" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-barcode mr-2"></i>View Label</a>
+                        <a id="v_link_parcel1" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box mr-2"></i>View Pic 1</a>
+                        <a id="v_link_parcel2" href="#" target="_blank" class="block text-[10px] font-black text-blue-600 underline"><i class="fa-solid fa-box-open mr-2"></i>View Pic 2</a>
+                    </div>
+                    <button id="modalPrintBtn" class="w-full bg-slate-900 text-white font-black py-4 rounded uppercase text-xs hover:bg-black transition">Reprint Delivery Slip</button>
+                </div>
             </div>
         </div>
     </div>
-</main>
+</div>
 
-<div id="confirmModal" class="fixed inset-0 z-[400] hidden items-center justify-center p-4 modal-blur">
-    <div class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden">
-        <div class="p-5 bg-slate-50 border-b text-center">
-            <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Verify Order Data</h3>
-        </div>
-        <div id="confirmContent" class="p-6 space-y-1.5 text-sm font-bold"></div>
-        <div class="p-5 space-y-2.5">
-            <button onclick="finalSync(true)"  class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-2 transition">
-                <i class="fa-solid fa-print"></i> Save & Print Slip
-            </button>
-            <button onclick="finalSync(false)" class="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 transition">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Save Only
-            </button>
-            <button onclick="closeConfirm()"   class="w-full py-3.5 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-2xl font-black text-[10px] uppercase transition">
-                Edit Details
-            </button>
-        </div>
+<div id="globalLoader" class="fixed inset-0 z-[600] hidden items-center justify-center bg-slate-900/50">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 text-center border-t-4 border-blue-600">
+        <div class="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+        <div><p id="loaderMsg" class="text-[11px] font-black uppercase tracking-widest text-slate-800">Processing Data...</p><p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Please Wait</p></div>
     </div>
 </div>
 
-<div id="successPopup" class="fixed inset-0 z-[600] hidden items-center justify-center p-4 modal-blur">
-    <div class="bg-white w-full max-w-xs rounded-[2rem] p-8 shadow-2xl text-center">
-        <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-check text-2xl"></i></div>
-        <h3 class="text-base font-black uppercase">Order Saved</h3>
-        <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Cloud Sync Successful</p>
-        <button onclick="location.reload()" class="w-full mt-5 bg-slate-900 text-white font-black py-3.5 rounded-2xl uppercase text-[10px] tracking-widest transition">New Entry</button>
-    </div>
-</div>
-
-<div id="globalLoader" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur">
-    <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4">
-        <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-        <p class="text-[10px] font-black uppercase tracking-widest">Syncing with Google Cloud...</p>
-    </div>
-</div>
-
-<div id="printArea" style="width: 54mm; margin: 0 auto; color: #000; background: #fff;">
-    
+<div id="printArea">
     <div style="text-align: center; border-bottom: 2.5px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
         <p style="margin: 0; font-size: 10pt; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">LENSKART</p>
-        <h1 style="margin: 0; font-size: 16pt; font-weight: 900; line-height: 1.1; text-decoration: underline;">DELIVERY SLIP</h1>
+        <h1 style="margin: 0; font-size: 16pt; font-weight: 900; text-decoration: underline;">DELIVERY SLIP</h1>
     </div>
-
     <div style="margin-bottom: 12px; font-size: 11pt; line-height: 1.4;">
         <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 10pt;">TO,</p>
-        <p style="margin: 4px 0 0 0;"><b>Customer Name:-</b> <span id="prName" style="text-transform: uppercase;"></span></p>
-        <p style="margin: 2px 0 0 0;"><b>Address:-</b> <span id="prAddr"></span></p>
+        <p style="margin: 4px 0 0 0;"><b>Customer Name:-</b> <span id="prName" style="text-transform: uppercase; font-weight:900;"></span></p>
+        <p style="margin: 2px 0 0 0;"><b>Shipping Address:-</b> <span id="prAddr"></span></p>
         <p style="margin: 2px 0 0 0;"><b>City:-</b> <span id="prCity"></span></p>
-        <p style="margin: 2px 0 0 0;"><b>State:-</b> <span id="prState"></span></p>
-        <p style="margin: 2px 0 0 0;"><b>Pincode:-</b> <span id="prPin"></span></p>
-        <p style="margin: 2px 0 0 0;" id="prLandmarkLine"><b>Landmark:-</b> <span id="prLandmark"></span></p>
-        
-        <div style="margin-top: 6px; border-top: 1px dashed #000; padding-top: 4px;">
-            <p style="margin: 0;"><b>Contact:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
-            <p style="margin: 2px 0 0 0;" id="prAltLine"><b>Alt Number:-</b> <span id="prAltMob"></span></p>
-        </div>
+        <p style="margin: 4px 0 0 0;"><b>Contact:-</b> <span id="prMob" style="font-weight: 900; font-size: 11.5pt;"></span></p>
     </div>
-
     <div style="border-top: 2px solid #000; padding-top: 8px; margin-bottom: 12px; font-size: 10pt; line-height: 1.3;">
         <p style="margin: 0; font-weight: 900; text-decoration: underline; font-size: 9pt;">FROM,</p>
         <p style="margin: 4px 0 0 0; font-weight: 900; font-size: 11pt;">LENSKART PALI</p>
-        <p style="margin: 2px 0 0 0;">Shop No 3 & 4, Ground Floor, Ahinsa Complex, Ambedkar Cir, Suraj Pole, Pali, Raj. 306401</p>
-        <p style="margin: 4px 0 0 0;"><b>Contact:-</b> 8290776551</p>
+        <p style="margin: 0;">📞 8290776551</p>
     </div>
-
     <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px;">
         <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 6px;"></div>
-        <p style="margin: 0; font-weight: 900; font-size: 14pt; font-family: 'Courier New', Courier, monospace;">
-            Order id:- <span id="prId"></span>
-        </p>
+        <p style="margin: 0; font-weight: 900; font-size: 14pt;">Order id:- <span id="prId"></span></p>
     </div>
-
 </div>
 
 <script>
-    // ✅ PRODUCTION EXECUTION URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNWlJJBlKGzjIpkj49a7NK0O0umYK5gnRGiNFfMJgW15FFXWwvIMpBMo43E3On7bhptQ/exec";
+    let allOrders = [];
+    let showBreachOnly = false;
 
-    let tempPayload = null;
+    function showLoading(m) { document.getElementById('loaderMsg').innerText = m; document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
+    function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
 
-    function toggleView(v) {
-        document.getElementById('orderFormSection').classList.toggle('hidden', v !== 'form');
-        document.getElementById('searchSection').classList.toggle('hidden',    v !== 'search');
-        document.getElementById('nav-store').className   = v === 'form' ? 'px-3 py-1.5 text-[10px] font-black uppercase bg-blue-600 rounded-lg' : 'px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg';
-        document.getElementById('nav-reprint').className = v === 'search' ? 'px-3 py-1.5 text-[10px] font-black uppercase bg-blue-600 rounded-lg' : 'px-3 py-1.5 text-[10px] font-black uppercase opacity-50 rounded-lg';
-    }
-
-    let pinDebounce = null;
-    async function handlePincode(pin) {
-        clearTimeout(pinDebounce);
-        if (pin.length !== 6) return;
-        pinDebounce = setTimeout(async () => {
-            document.getElementById('pinLoader').classList.remove('hidden');
-            try {
-                const res  = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
-                const data = await res.json();
-                if (data[0].Status === "Success") {
-                    const po = data[0].PostOffice;
-                    document.getElementById('postOffice').innerHTML = po.map(p => `<option value="${p.Name}">${p.Name}</option>`).join('');
-                    document.getElementById('city').value  = po[0].District;
-                    document.getElementById('state').value = po[0].State;
-                }
-            } catch (err) { console.error("Pin lookup failed"); }
-            document.getElementById('pinLoader').classList.add('hidden');
-        }, 400);
-    }
-
-    document.getElementById('orderForm').onsubmit = (e) => {
-        e.preventDefault();
-        const mobile    = document.getElementById('mobile').value.trim();
-        const altMobile = document.getElementById('altMobile').value.trim();
-
-        tempPayload = {
-            action:     "addOrder",
-            orderId:    document.getElementById('manualId').value.toUpperCase().trim(),
-            name:       document.getElementById('custName').value.trim(),
-            mobile:     "+91 " + mobile,
-            altMobile:  altMobile ? ("+91 " + altMobile) : "N/A",
-            landmark:   document.getElementById('landmark').value.trim() || "N/A",
-            pincode:    document.getElementById('pincode').value,
-            postOffice: document.getElementById('postOffice').value,
-            city:       document.getElementById('city').value  || "N/A",
-            state:      document.getElementById('state').value || "N/A",
-            address:    document.getElementById('address').value.trim()
-        };
-
-        document.getElementById('confirmContent').innerHTML = `
-            <div class="space-y-1">
-                <p class="text-blue-600 font-black text-base">ID: ${tempPayload.orderId}</p>
-                <p><span class="text-slate-400 text-[10px] uppercase">Name</span><br>${tempPayload.name.toUpperCase()}</p>
-                <p><span class="text-slate-400 text-[10px] uppercase">Contact</span><br>${tempPayload.mobile}</p>
-                <p><span class="text-slate-400 text-[10px] uppercase">Shipping Address</span><br>${tempPayload.address.toUpperCase()}</p>
-                <p class="text-[10px] text-blue-600 font-bold">${tempPayload.city}, ${tempPayload.state} — ${tempPayload.pincode}</p>
-            </div>
-        `;
-        document.getElementById('confirmModal').classList.replace('hidden', 'flex');
-    };
-
-    async function finalSync(shouldPrint) {
-        closeConfirm();
-        showLoading();
+    async function refreshData() {
+        showLoading("Syncing DB...");
         try {
-            const res    = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(tempPayload) });
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getAllData" }) });
             const result = await res.json();
-
-            if (result.status === "success") {
-                hideLoading();
-                if (shouldPrint) triggerPrint(tempPayload.orderId, tempPayload);
-                document.getElementById('successPopup').classList.replace('hidden', 'flex');
-            } else {
-                hideLoading();
-                alert("Error: " + result.message);
-            }
-        } catch (err) { hideLoading(); alert("Connection Error: Check internet."); }
-    }
-
-    async function searchOrder() {
-        const id = document.getElementById('searchInput').value.toUpperCase().trim();
-        if(!id) return;
-        showLoading();
-        try {
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
-            const result = await res.json();
-            if(result.status === "success" && result.data.order) {
-                const d = result.data.order;
-                document.getElementById('resId').innerText   = id;
-                document.getElementById('resName').innerText = d[1];
-                document.getElementById('resMob').innerText  = d[3];
-                document.getElementById('resAddr').innerText = d[2];
-                document.getElementById('searchResult').classList.remove('hidden');
-                document.getElementById('reprintBtn').onclick = () => triggerPrint(id, { name: d[1], address: d[2], city: d[7], state: d[8], pincode: d[5], landmark: d[9], mobile: d[3], altMobile: d[4] });
-            } else { alert("Order ID Not Found."); }
-        } catch (e) { alert("Search Error."); }
+            if (result.status === "success") { allOrders = result.orders; renderTable(); }
+        } catch (e) { alert("Load Error"); }
         hideLoading();
     }
 
-    function triggerPrint(orderId, data) {
-        setText('prId', orderId);
-        setText('prName', data.name);
-        setText('prAddr', data.address);
-        setText('prCity', data.city);
-        setText('prState', data.state);
-        setText('prPin', data.pincode);
-        setText('prMob', data.mobile);
-        
-        const lm = data.landmark;
-        if (lm && lm !== "N/A") {
-            setText('prLandmark', lm);
-            document.getElementById('prLandmarkLine').style.display = 'block';
-        } else { document.getElementById('prLandmarkLine').style.display = 'none'; }
+    function toggleBreachFilter() {
+        showBreachOnly = !showBreachOnly;
+        document.getElementById('breachToggle').className = showBreachOnly ? "bg-rose-600 text-white px-4 py-2 text-[10px] font-black uppercase rounded shadow-lg" : "bg-white border px-4 py-2 text-[10px] font-black uppercase rounded shadow-sm";
+        renderTable();
+    }
 
-        const alt = data.altMobile;
-        if (alt && alt !== "N/A") {
-            setText('prAltMob', alt);
-            document.getElementById('prAltLine').style.display = 'block';
-        } else { document.getElementById('prAltLine').style.display = 'none'; }
+    function renderTable() {
+        const tbody = document.getElementById('masterTableBody');
+        const q = document.getElementById('searchBox').value.toUpperCase().trim();
+        const f = document.getElementById('statusFilter').value;
+        const now = new Date();
 
+        let breachTotal = 0;
+        allOrders.forEach(o => {
+            const age = Math.floor((now - new Date(o[3])) / 864e5);
+            if ((o[4] === 'Created' || o[4] === 'Received') && age >= 3) breachTotal++;
+        });
+
+        document.getElementById('stat-total').innerText = allOrders.length;
+        document.getElementById('stat-created').innerText = allOrders.filter(o => o[4] === 'Created').length;
+        document.getElementById('stat-dispatch').innerText = allOrders.filter(o => o[4] === 'Dispatch').length;
+        document.getElementById('stat-breach').innerText = breachTotal;
+
+        const filtered = allOrders.filter(o => {
+            const age = Math.floor((now - new Date(o[3])) / 864e5);
+            const isBreach = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
+            const matchesSearch = (o[0].toUpperCase().includes(q) || o[1].toUpperCase().includes(q) || o[2].includes(q));
+            const matchesStatus = (f === "" || o[4] === f);
+            const matchesBreach = showBreachOnly ? isBreach : true;
+            return matchesSearch && matchesStatus && matchesBreach;
+        }).reverse();
+
+        tbody.innerHTML = filtered.map(o => {
+            const age = Math.floor((now - new Date(o[3])) / 864e5);
+            const isBreach = (o[4] === 'Created' || o[4] === 'Received') && age >= 3;
+            return `<tr><td>${new Date(o[3]).toLocaleDateString('en-IN')}</td><td class="font-black text-blue-600">${o[0]}</td><td class="font-bold uppercase">${o[1]}</td><td class="text-blue-700">${o[2]}</td><td class="${isBreach ? 'text-rose-600 font-black' : 'text-slate-400 font-bold'}">${age} Days</td><td><span class="badge badge-${o[4]}">${o[4]}</span> ${isBreach ? '<span class="badge badge-BREACH">DELAY</span>' : ''}</td><td class="text-center"><button onclick="viewOrder('${o[0]}')" class="bg-slate-900 text-white px-3 py-1 rounded text-[9px] font-black uppercase transition active:scale-95">Analyse</button></td></tr>`;
+        }).join('');
+    }
+
+    async function viewOrder(id) {
+        showLoading(`Drilling Down ID: ${id}`);
+        try {
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
+            const result = await res.json();
+            const d = result.data.order;
+            const t = result.data.track;
+
+            document.getElementById('v_id').innerText = d[0];
+            document.getElementById('v_name').innerText = d[1];
+            document.getElementById('v_mob').innerText = d[3];
+            document.getElementById('v_addr').innerText = `${d[2]}, ${d[6]}, ${d[7]} - ${d[5]}`;
+            
+            // 🚀 FILL TRACKING INFO (ADDED)
+            if (t) {
+                document.getElementById('v_track_info').classList.remove('hidden');
+                document.getElementById('v_courier').innerText = "Courier: " + (t[1] || "N/A");
+                document.getElementById('v_trackid').innerText = t[2] || "N/A";
+            } else {
+                document.getElementById('v_track_info').classList.add('hidden');
+            }
+
+            setupLink('v_link_label', t ? t[6] : "");
+            setupLink('v_link_parcel1', t ? t[7] : "");
+            setupLink('v_link_parcel2', t ? t[8] : "");
+            document.getElementById('parcelPhotosContainer').classList.toggle('hidden', !t);
+            
+            document.getElementById('modalPrintBtn').onclick = () => triggerPrint(id, d);
+            hideLoading();
+            document.getElementById('viewModal').classList.replace('hidden', 'flex');
+        } catch (e) { hideLoading(); alert("Fetch Error"); }
+    }
+
+    function triggerPrint(orderId, d) {
+        document.getElementById('prId').innerText = orderId;
+        document.getElementById('prName').innerText = d[1];
+        document.getElementById('prAddr').innerText = d[2];
+        document.getElementById('prCity').innerText = d[7] || "";
+        document.getElementById('prMob').innerText = d[3] || "";
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: orderId, width: 95, height: 95 });
         setTimeout(() => window.print(), 800);
     }
 
-    function setText(id, val) { document.getElementById(id).innerText = val || ""; }
-    function showLoading() { document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
-    function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
-    function closeConfirm() { document.getElementById('confirmModal').classList.replace('flex', 'hidden'); }
+    function setupLink(id, url) {
+        const el = document.getElementById(id);
+        if (url && url.length > 10) { el.href = url; el.classList.remove('hidden'); }
+        else { el.classList.add('hidden'); }
+    }
+
+    async function generateEOD() {
+        if (!confirm("Email Summary?")) return;
+        showLoading("Generating Report...");
+        try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "generateEOD" }) }); alert("✅ EOD Dispatched!"); } catch (e) { alert("Failed."); }
+        hideLoading();
+    }
+
+    function closeModals() { document.getElementById('viewModal').classList.replace('flex', 'hidden'); }
+    window.onload = refreshData;
 </script>
 </body>
 </html>
