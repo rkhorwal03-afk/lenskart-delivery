@@ -6,8 +6,16 @@
     <title>Rider Panel | Lenskart Pali</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
     <style>
         .modal-blur { backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.6); }
+        #qr-reader { width: 100% !important; border-radius: 1rem; overflow: hidden; border: none; }
+        #qr-reader video { border-radius: 1rem; object-fit: cover; }
+        #qr-reader__dashboard_section_csr span { font-size: 12px; font-weight: bold; font-family: sans-serif; }
+        #qr-reader__dashboard_section_csr button { background: #2563eb; color: white; border-radius: 8px; padding: 5px 10px; border: none; font-weight: bold; margin-top: 5px; cursor: pointer; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
@@ -33,34 +41,47 @@
         </div>
 
         <div id="scanSection" class="space-y-6">
-            <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 p-8 space-y-5">
+            <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 p-8 space-y-6">
                 
                 <div>
-                    <label class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Order ID</label>
-                    <input type="text" id="orderIdSearch" placeholder="ORD..." class="w-full border-2 p-4 rounded-2xl font-black uppercase outline-none focus:border-blue-600 mt-1 text-lg">
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <p class="text-[9px] font-black text-slate-400 uppercase text-center">1. Label Info</p>
-                        <button onclick="capture('label')" class="w-full h-32 bg-slate-50 rounded-2xl border-2 border-dashed border-blue-200 flex flex-col items-center justify-center relative overflow-hidden hover:bg-blue-50 transition">
-                            <i class="fa-solid fa-barcode text-2xl mb-2 text-blue-600"></i>
-                            <span class="text-[9px] font-black uppercase text-blue-600">Scan Label</span>
-                            <img id="prev-label" class="hidden absolute inset-0 w-full h-full object-cover">
+                    <label class="text-[10px] font-black text-blue-600 uppercase tracking-widest">1. Order ID</label>
+                    
+                    <button onclick="startQRScanner()" class="w-full mt-2 bg-blue-50 text-blue-700 font-black py-4 rounded-2xl uppercase text-xs flex items-center justify-center gap-2 border-2 border-blue-200 hover:bg-blue-100 transition shadow-sm">
+                        <i class="fa-solid fa-qrcode text-lg"></i> Direct Camera Scan
+                    </button>
+                    
+                    <div id="qr-reader" class="hidden mt-3 border-2 border-blue-400 bg-black"></div>
+
+                    <div class="flex items-center gap-3 my-4">
+                        <hr class="flex-1 border-slate-200"><span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">OR</span><hr class="flex-1 border-slate-200">
+                    </div>
+
+                    <div class="flex gap-2">
+                        <input type="text" id="orderIdSearch" placeholder="Manual Input..." class="flex-1 border-2 p-4 rounded-2xl font-black uppercase outline-none focus:border-blue-600 text-lg bg-slate-50">
+                        <button onclick="verifyOrderId()" class="bg-slate-900 text-white px-6 rounded-2xl font-black transition hover:bg-slate-800 shadow-md">
+                            <i class="fa-solid fa-magnifying-glass text-lg"></i>
                         </button>
                     </div>
-                    <div class="space-y-2">
-                        <p class="text-[9px] font-black text-slate-400 uppercase text-center">2. Parcel Proof</p>
-                        <button onclick="capture('parcel')" class="w-full h-32 bg-slate-50 rounded-2xl border-2 border-dashed border-blue-200 flex flex-col items-center justify-center relative overflow-hidden hover:bg-blue-50 transition">
-                            <i class="fa-solid fa-box text-2xl mb-2 text-blue-600"></i>
-                            <span class="text-[9px] font-black uppercase text-blue-600">Take Photo</span>
-                            <img id="prev-parcel" class="hidden absolute inset-0 w-full h-full object-cover">
+                    
+                    <p id="verifyResult" class="text-[10px] font-bold mt-3 hidden uppercase tracking-wide"></p>
+                </div>
+                
+                <div class="pt-2 border-t border-slate-100">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">2. Capture 2 Parcel Photos</label>
+                    <div class="grid grid-cols-2 gap-4 mt-2">
+                        <button onclick="capture('parcel1')" class="w-full h-32 bg-slate-50 rounded-2xl border-2 border-dashed border-blue-200 flex flex-col items-center justify-center relative overflow-hidden">
+                            <i class="fa-solid fa-box text-xl mb-1 text-blue-600"></i><span class="text-[9px] font-black uppercase text-blue-600">Pic 1</span>
+                            <img id="prev-parcel1" class="hidden absolute inset-0 w-full h-full object-cover">
+                        </button>
+                        <button onclick="capture('parcel2')" class="w-full h-32 bg-slate-50 rounded-2xl border-2 border-dashed border-blue-200 flex flex-col items-center justify-center relative overflow-hidden">
+                            <i class="fa-solid fa-box-open text-xl mb-1 text-blue-600"></i><span class="text-[9px] font-black uppercase text-blue-600">Pic 2</span>
+                            <img id="prev-parcel2" class="hidden absolute inset-0 w-full h-full object-cover">
                         </button>
                     </div>
                 </div>
 
-                <div class="pt-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Courier Partner</label>
+                <div class="pt-2 border-t border-slate-100">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">3. Courier Partner</label>
                     <select id="courier" class="w-full border-2 p-4 rounded-2xl bg-white font-bold outline-none focus:border-blue-600 mt-1">
                         <option value="DTDC Express">DTDC Express</option>
                         <option value="Delhivery">Delhivery</option>
@@ -69,13 +90,21 @@
                     </select>
                 </div>
 
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tracking ID / AWB</label>
-                    <input type="text" id="trackingId" placeholder="Enter AWB No..." class="w-full border-2 p-4 rounded-2xl font-bold outline-none focus:border-blue-600 mt-1 uppercase">
+                <div class="pt-2 border-t border-slate-100">
+                    <label class="text-[10px] font-black text-blue-600 uppercase tracking-widest">4. Tracking Label (OCR)</label>
+                    <p class="text-[10px] text-slate-400 font-bold mb-2 leading-tight">Take a clear photo of the Tracking Barcode. The AI will extract the AWB number automatically.</p>
+                    
+                    <button onclick="capture('label')" class="w-full h-24 mb-3 bg-blue-50 rounded-2xl border-2 border-blue-300 flex items-center justify-center relative overflow-hidden hover:bg-blue-100 transition gap-3">
+                        <i class="fa-solid fa-camera text-blue-600 text-xl"></i>
+                        <span class="text-[12px] font-black uppercase text-blue-600">Take Label Photo</span>
+                        <img id="prev-label" class="hidden absolute inset-0 w-full h-full object-cover opacity-50">
+                    </button>
+                    
+                    <input type="text" id="trackingId" placeholder="AI Tracking ID will appear here..." class="w-full border-2 p-4 rounded-2xl font-bold outline-none focus:border-blue-600 uppercase bg-slate-50">
                 </div>
 
-                <button onclick="syncToCloud()" id="syncBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl uppercase text-xs shadow-lg mt-4 flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Sync
+                <button onclick="syncToCloud()" id="syncBtn" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl uppercase text-xs shadow-lg mt-4 flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Sync All
                 </button>
             </div>
         </div>
@@ -92,29 +121,35 @@
         </div>
     </main>
 
+    <div id="ocrLoader" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur">
+        <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4 text-center">
+            <i class="fa-solid fa-microchip animate-bounce text-blue-600 text-3xl"></i>
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-800 leading-tight">AI Scanning Image...<br><span class="text-slate-400">Extracting Tracking ID</span></p>
+        </div>
+    </div>
+
     <div id="globalLoader" class="fixed inset-0 z-[500] hidden items-center justify-center p-4 modal-blur">
         <div class="bg-white px-10 py-8 rounded-[2rem] shadow-2xl flex flex-col items-center gap-4">
             <div class="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-            <p class="text-[10px] font-black uppercase tracking-widest text-slate-800">Compressing & Syncing...</p>
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-800">Please Wait...</p>
         </div>
     </div>
 
     <div id="successPopup" class="fixed inset-0 z-[600] hidden items-center justify-center p-4 modal-blur">
-        <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl text-center animate-in zoom-in duration-200">
-            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-check text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-black uppercase">Synced Successfully</h3>
-            <p class="text-[10px] font-bold text-slate-400 uppercase mt-2">Images Saved to Drive</p>
-            <button onclick="resetRiderForm()" class="w-full mt-6 bg-slate-900 text-white font-black py-4 rounded-2xl uppercase text-[10px] tracking-widest">Next Parcel</button>
+        <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl text-center">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-check text-2xl"></i></div>
+            <h3 class="text-lg font-black uppercase">Synced!</h3>
+            <p class="text-[10px] font-bold text-slate-400 uppercase mt-2">All data saved</p>
+            <button onclick="location.reload()" class="w-full mt-6 bg-slate-900 text-white font-black py-4 rounded-2xl uppercase text-[10px]">Next Parcel</button>
         </div>
     </div>
 
     <script>
+        // ✅ YOUR NEW SCRIPT URL INJECTED HERE
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcpgxDJoRyOwdct7PWtPl6HxqYv-TCiDBiQ9R26QviiGQXLcJaXXTZ30oBcsx7bYjo2A/exec"; 
         
-        let labelData = "";
-        let parcelData = "";
+        let labelData = "", parcelData1 = "", parcelData2 = "";
+        let html5QrcodeScanner;
 
         function toggleRiderView(v) {
             document.getElementById('scanSection').classList.toggle('hidden', v !== 'scan');
@@ -124,16 +159,54 @@
             if(v === 'history') loadLocalHistory();
         }
 
+        async function verifyOrderId() {
+            const id = document.getElementById('orderIdSearch').value.toUpperCase().trim();
+            const resEl = document.getElementById('verifyResult');
+            
+            if(!id) {
+                resEl.className = "text-[10px] font-bold mt-3 text-red-500 block uppercase tracking-wide";
+                resEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Please enter an ID first.`;
+                return;
+            }
+            
+            resEl.className = "text-[10px] font-bold mt-3 text-blue-500 block uppercase tracking-wide animate-pulse";
+            resEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Checking Database...`;
+            
+            try {
+                const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "getOrderDetail", orderId: id }) });
+                const result = await res.json();
+                
+                resEl.classList.remove('animate-pulse');
+                if(result.status === "success" && result.data.order) {
+                    resEl.className = "text-[11px] font-black mt-3 text-green-600 block uppercase tracking-wide bg-green-50 p-2 rounded-lg border border-green-200";
+                    resEl.innerHTML = `<i class="fa-solid fa-circle-check text-lg align-middle mr-1"></i> Verified: ${result.data.order[1]}`;
+                } else {
+                    resEl.className = "text-[11px] font-black mt-3 text-red-600 block uppercase tracking-wide bg-red-50 p-2 rounded-lg border border-red-200";
+                    resEl.innerHTML = `<i class="fa-solid fa-circle-xmark text-lg align-middle mr-1"></i> ID Not Found`;
+                }
+            } catch (e) {
+                resEl.className = "text-[10px] font-bold mt-3 text-red-500 block uppercase tracking-wide";
+                resEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Network error. Try again.`;
+            }
+        }
+
+        function startQRScanner() {
+            document.getElementById('qr-reader').classList.remove('hidden');
+            html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250} });
+            html5QrcodeScanner.render(onScanSuccess, onScanError);
+        }
+        function onScanSuccess(decodedText, decodedResult) {
+            document.getElementById('orderIdSearch').value = decodedText;
+            html5QrcodeScanner.clear();
+            document.getElementById('qr-reader').classList.add('hidden');
+            verifyOrderId(); 
+        }
+        function onScanError(e) { }
+
         function capture(type) {
             const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.capture = 'environment';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                if (!file) return;
-                compressImage(file, type);
-            };
+            input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment';
+            input.onchange = e => { if (e.target.files[0]) compressImage(e.target.files[0], type); };
             input.click();
         }
 
@@ -141,15 +214,11 @@
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = event => {
-                const img = new Image();
-                img.src = event.target.result;
+                const img = new Image(); img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; 
-                    const scale = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scale;
-                    
+                    const MAX_WIDTH = 800; const scale = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH; canvas.height = img.height * scale;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
@@ -159,13 +228,37 @@
                         labelData = base64; 
                         document.getElementById('prev-label').src = base64; 
                         document.getElementById('prev-label').classList.remove('hidden'); 
-                    } else { 
-                        parcelData = base64; 
-                        document.getElementById('prev-parcel').src = base64; 
-                        document.getElementById('prev-parcel').classList.remove('hidden'); 
+                        runOCR(base64);
+                    } 
+                    else if (type === 'parcel1') { 
+                        parcelData1 = base64; 
+                        document.getElementById('prev-parcel1').src = base64; 
+                        document.getElementById('prev-parcel1').classList.remove('hidden'); 
+                    }
+                    else if (type === 'parcel2') { 
+                        parcelData2 = base64; 
+                        document.getElementById('prev-parcel2').src = base64; 
+                        document.getElementById('prev-parcel2').classList.remove('hidden'); 
                     }
                 };
             };
+        }
+
+        async function runOCR(base64Data) {
+            document.getElementById('ocrLoader').classList.remove('hidden');
+            try {
+                const result = await Tesseract.recognize(base64Data, 'eng');
+                const text = result.data.text;
+                const words = text.split(/\s+/).map(w => w.replace(/[^a-zA-Z0-9]/g, ''));
+                const longest = words.sort((a, b) => b.length - a.length)[0];
+                
+                if(longest && longest.length > 5) {
+                    document.getElementById('trackingId').value = longest;
+                } else {
+                    alert("AI couldn't clearly read the barcode. Please type the tracking ID manually.");
+                }
+            } catch (e) { console.error(e); }
+            document.getElementById('ocrLoader').classList.add('hidden');
         }
 
         async function syncToCloud() {
@@ -173,25 +266,22 @@
             const courier = document.getElementById('courier').value;
             const trackingId = document.getElementById('trackingId').value.trim().toUpperCase();
 
-            if (!orderId || !trackingId) {
-                alert("Please enter both Order ID and Tracking ID.");
-                return;
-            }
-            if (!labelData && !parcelData) {
-                if(!confirm("You haven't added any photos. Continue anyway?")) return;
-            }
+            if (!orderId || !trackingId) { alert("Missing Order ID or Tracking ID."); return; }
 
-            showLoading();
+            document.getElementById('globalLoader').classList.replace('hidden', 'flex');
+            document.querySelector('#globalLoader p').innerText = "Compressing 3 Images...";
             
             const payload = {
-                action: "updateTracker",
-                orderId: orderId,
-                courier: courier,
-                trackingId: trackingId,
+                action: "updateTracker", 
+                orderId: orderId, 
+                courier: courier, 
+                trackingId: trackingId, 
+                ocrData: trackingId, 
                 riderName: "PALI_RIDER", 
-                pickupDate: new Date().toLocaleDateString(),
-                trackingImg: labelData,
-                parcelImg: parcelData
+                pickupDate: new Date().toLocaleDateString(), 
+                trackingImg: labelData, 
+                parcelImg1: parcelData1, 
+                parcelImg2: parcelData2
             };
 
             try {
@@ -200,72 +290,39 @@
                 
                 if(result.status === "success") {
                     saveToLocalHistory(payload);
-                    hideLoading();
+                    document.getElementById('globalLoader').classList.replace('flex', 'hidden');
                     document.getElementById('successPopup').classList.replace('hidden', 'flex');
                 } else {
-                    alert("Error: Order ID might not exist in the Master Database.");
-                    hideLoading();
+                    alert("Upload Error: Order ID Not Found in Main Database. Did you verify it?");
+                    document.getElementById('globalLoader').classList.replace('flex', 'hidden');
                 }
             } catch (e) { 
-                alert("Sync Failed. Please check your internet connection."); 
-                hideLoading();
+                alert("Sync Failed. Check Internet."); 
+                document.getElementById('globalLoader').classList.replace('flex', 'hidden');
             }
         }
 
         function saveToLocalHistory(data) {
             let history = JSON.parse(localStorage.getItem('pali_rider_history') || '[]');
             history = history.filter(item => item.id !== data.orderId);
-            
-            history.unshift({ 
-                id: data.orderId, 
-                courier: data.courier, 
-                tracking: data.trackingId, 
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            });
-            
+            history.unshift({ id: data.orderId, courier: data.courier, tracking: data.trackingId, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
             localStorage.setItem('pali_rider_history', JSON.stringify(history.slice(0, 20)));
         }
 
         function loadLocalHistory() {
             const list = document.getElementById('historyList');
             const history = JSON.parse(localStorage.getItem('pali_rider_history') || '[]');
-            
-            if (history.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 text-slate-400 text-[10px] font-bold uppercase">No scans in this session.</div>`;
-                return;
-            }
-
+            if (history.length === 0) { list.innerHTML = `<div class="text-center py-10 text-slate-400 text-[10px] font-bold uppercase">No scans in this session.</div>`; return; }
             list.innerHTML = history.map(row => `
-                <div class="bg-white p-5 rounded-[1.5rem] border border-slate-200 shadow-sm flex justify-between items-center animate-in slide-in-from-bottom duration-300">
+                <div class="bg-white p-5 rounded-[1.5rem] border border-slate-200 shadow-sm flex justify-between items-center">
                     <div>
                         <p class="text-[12px] font-black text-blue-600 font-mono">${row.id}</p>
                         <p class="text-xs font-bold text-slate-800">${row.courier} - AWB: ${row.tracking}</p>
                         <p class="text-[9px] text-slate-400 uppercase font-black mt-1"><i class="fa-regular fa-clock"></i> ${row.time}</p>
                     </div>
-                    <button onclick="editEntry('${row.id}', '${row.courier}', '${row.tracking}')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 w-10 h-10 rounded-xl flex items-center justify-center transition-all">
-                        <i class="fa-solid fa-pen text-sm"></i>
-                    </button>
                 </div>
             `).join('');
         }
-
-        function editEntry(id, courier, tracking) {
-            toggleRiderView('scan');
-            document.getElementById('orderIdSearch').value = id;
-            document.getElementById('courier').value = courier;
-            document.getElementById('trackingId').value = tracking;
-            
-            labelData = ""; parcelData = "";
-            document.getElementById('prev-label').classList.add('hidden');
-            document.getElementById('prev-parcel').classList.add('hidden');
-            
-            document.getElementById('syncBtn').innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Update Entry`;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function showLoading() { document.getElementById('globalLoader').classList.replace('hidden', 'flex'); }
-        function hideLoading() { document.getElementById('globalLoader').classList.replace('flex', 'hidden'); }
-        function resetRiderForm() { location.reload(); }
     </script>
 </body>
 </html>
